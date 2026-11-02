@@ -7,6 +7,10 @@
 [![Twitch EventSub](https://img.shields.io/badge/Twitch-EventSub%20WebSocket%20v1-purple)](https://dev.twitch.tv/docs/eventsub/)
 [![Codex Session](https://img.shields.io/badge/OpenAI%20Codex-Session%20Verified-blueviolet)](https://github.com/abhijeetnardele24-hash/raidrelay)
 
+[![Watch the 2:37 RaidRelay demo](docs/screenshots/thumbnail.png)](https://youtu.be/lI7PhG8JSnY)
+
+**[Watch the 2:37 product demo](https://youtu.be/lI7PhG8JSnY)** — a captioned walkthrough of the five-phase raid ritual, chat voting, broadcaster controls, and Codex-built architecture.
+
 ---
 
 ## Winning Thesis

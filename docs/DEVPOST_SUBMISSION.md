@@ -96,5 +96,5 @@ Codex was critical across every engineering milestone:
 
 - **GitHub Repository:** [https://github.com/abhijeetnardele24-hash/raidrelay](https://github.com/abhijeetnardele24-hash/raidrelay)
 - **Codex Session ID:** `93a16a2b-a2a0-461f-851b-7a1e342fe97f`
-- **Demo Video:** [https://youtu.be/PLACEHOLDER_VIDEO_URL](https://youtu.be/PLACEHOLDER_VIDEO_URL)
+- **Demo Video:** [https://youtu.be/lI7PhG8JSnY](https://youtu.be/lI7PhG8JSnY)
 
