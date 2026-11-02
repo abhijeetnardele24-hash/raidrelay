@@ -41,7 +41,7 @@ RaidRelay is built as a high-performance TypeScript monorepo with verified verti
 - **Server-Authoritative State Engine (`@raidrelay/domain`):** Deterministic finite state machine managing phase durations, monotonic sequence numbers, tie-breaking, and tamper-evident HMAC participation receipt generation.
 - **Backend Service (`apps/server`):** Built with Fastify, native WebSockets, and WebAssembly SQLite (`sql.js`) for disk persistence. Incorporates an **EventGuard** security perimeter that deduplicates Twitch EventSub messages and enforces a 10-minute freshness window.
 - **Broadcast Overlay & Control Console (`apps/web`):** React 18 and Tailwind CSS application rendering a transparent 1920×1080 OBS browser source, a Broadcaster Console workspace, and an interactive **Demo Lab for Judges**.
-- **Automated Verification Pipeline:** 23 Vitest unit/integration tests, 8 Playwright browser journeys across desktop and mobile viewports, Axe Core WCAG 2.1 AA scans with 0 violations, and automated secret and truthfulness linters.
+- **Automated Verification Pipeline:** 35 Vitest unit/integration tests, 8 Playwright browser journeys across desktop and mobile viewports, Axe Core WCAG 2.1 AA scans with 0 violations, and automated secret and truthfulness linters.
 
 ---
 
