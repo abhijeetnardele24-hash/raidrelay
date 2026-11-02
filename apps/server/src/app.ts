@@ -81,6 +81,8 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
   let activeBroadcasterId: string | null = null;
   let lastLiveBroadcastState: string = '';
   let lastDemoBroadcastState: string = '';
+  let tokenRefreshInterval: NodeJS.Timeout | null = null;
+  let getFreshTwitchToken: () => Promise<string | null> = async () => null;
 
   // Dedicated demo channel configuration with secure ephemeral capability key
   const DEMO_BROADCASTER_ID = 'demo-channel';
@@ -111,17 +113,19 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
     db.saveRitual(snapshot);
     hub.broadcastSnapshot(currentConfig.broadcasterId, snapshot);
 
-    // Send optional bot announcement message to Twitch chat safely
-    if (activeTwitchToken && activeBroadcasterId) {
-      void chatService
-        .sendMessage(
-          activeBroadcasterId,
-          activeBroadcasterId,
-          `[RaidRelay] Welcome ${validatedRaid.fromBroadcasterName} and ${validatedRaid.viewers} raiders! Two communities, one choice: type !relay A or !relay B in chat now!`,
-          activeTwitchToken
-        )
-        .catch(() => {});
-    }
+    // Send optional bot announcement message to Twitch chat safely using fresh token
+    void getFreshTwitchToken().then((token) => {
+      if (token && activeBroadcasterId) {
+        void chatService
+          .sendMessage(
+            activeBroadcasterId,
+            activeBroadcasterId,
+            `[RaidRelay] Welcome ${validatedRaid.fromBroadcasterName} and ${validatedRaid.viewers} raiders! Two communities, one choice: type !relay A or !relay B in chat now!`,
+            token
+          )
+          .catch(() => {});
+      }
+    });
   };
 
   // Periodic engine tick interval (100ms for live and demo)
@@ -175,6 +179,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
   app.addHook('onClose', async () => {
     clearInterval(tickInterval);
     clearInterval(cleanupInterval);
+    if (tokenRefreshInterval) clearInterval(tokenRefreshInterval);
     demoAdapter.stop();
     eventSub.disconnect();
     db.close();
@@ -225,6 +230,46 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
     config.TWITCH_CLIENT_ID,
     options.subscriptionTransport
   );
+
+  // Runtime token retrieval with proactive refresh and EventSub credential synchronization
+  getFreshTwitchToken = async (): Promise<string | null> => {
+    if (!activeBroadcasterId) return null;
+    const freshToken = await tokenManager.getValidAccessToken(
+      activeBroadcasterId,
+      oauth,
+      (newToken) => {
+        activeTwitchToken = newToken.accessToken;
+        eventSub.setBroadcasterCredentials(activeBroadcasterId!, newToken.accessToken);
+      }
+    );
+    if (freshToken && freshToken !== activeTwitchToken) {
+      activeTwitchToken = freshToken;
+      eventSub.setBroadcasterCredentials(activeBroadcasterId, freshToken);
+    }
+    return freshToken;
+  };
+
+  // Startup restoration: restore decrypted Twitch credentials if stored in SQLite database
+  const initialTokens = tokenManager.getLatestStoredTokens();
+  if (initialTokens) {
+    activeBroadcasterId = initialTokens.broadcasterId;
+    activeTwitchToken = initialTokens.accessToken;
+    eventSub.setBroadcasterCredentials(activeBroadcasterId, activeTwitchToken);
+    if (config.TWITCH_CLIENT_ID) {
+      eventSub.connect();
+    }
+  }
+
+  // Background proactive token refresh watchdog (every 30 seconds)
+  tokenRefreshInterval = setInterval(async () => {
+    if (activeBroadcasterId) {
+      try {
+        await getFreshTwitchToken();
+      } catch {
+        // Suppress background watchdog errors
+      }
+    }
+  }, 30000);
 
   // Strict CORS Plugin
   await app.register(cors, {
@@ -446,18 +491,20 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
     db.saveRitual(snap);
     hub.broadcastSnapshot(session.broadcasterId, snap);
 
-    // Send final result message to Twitch chat safely
-    if (activeTwitchToken && activeBroadcasterId && snap.selectedOption) {
-      const winnerText = snap.selectedOption === 'A' ? snap.optionA : snap.optionB;
-      void chatService
-        .sendMessage(
-          activeBroadcasterId,
-          activeBroadcasterId,
-          `[RaidRelay] Streamer approved the result! Together we chose: ${winnerText} (Option ${snap.selectedOption})!`,
-          activeTwitchToken
-        )
-        .catch(() => {});
-    }
+    // Send final result message to Twitch chat safely using fresh/refreshed token
+    void getFreshTwitchToken().then((token) => {
+      if (token && activeBroadcasterId && snap.selectedOption) {
+        const winnerText = snap.selectedOption === 'A' ? snap.optionA : snap.optionB;
+        void chatService
+          .sendMessage(
+            activeBroadcasterId,
+            activeBroadcasterId,
+            `[RaidRelay] Streamer approved the result! Together we chose: ${winnerText} (Option ${snap.selectedOption})!`,
+            token
+          )
+          .catch(() => {});
+      }
+    });
 
     return reply.send({ success: true, snapshot: snap });
   });

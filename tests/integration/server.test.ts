@@ -78,6 +78,32 @@ describe('RaidRelay Server API & Security Architecture', () => {
     expect(body.evidenceModes.SIMULATED).toBeDefined();
   });
 
+  it('ignores unrelated ambient CODEX_SESSION_ID and enforces canonical evidence manifest session ID', async () => {
+    const prevAmbient = process.env.CODEX_SESSION_ID;
+    process.env.CODEX_SESSION_ID = 'unrelated-foreign-ambient-session-id-12345';
+
+    try {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/health',
+      });
+      expect(res.statusCode).toBe(200);
+      const body = JSON.parse(res.body);
+
+      const manifestPath = path.resolve(__dirname, '../../docs/evidence-index.json');
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+
+      expect(body.codexSessionId).not.toBe('unrelated-foreign-ambient-session-id-12345');
+      expect(body.codexSessionId).toBe(manifest.codexSessionId);
+    } finally {
+      if (prevAmbient !== undefined) {
+        process.env.CODEX_SESSION_ID = prevAmbient;
+      } else {
+        delete process.env.CODEX_SESSION_ID;
+      }
+    }
+  });
+
   // Requirement 2: Public configuration DTO must NOT leak overlay capability
   it('GET /api/config returns public display data without channelKey', async () => {
     const res = await app.inject({

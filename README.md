@@ -2,7 +2,7 @@
 
 > **"The first 90 seconds after a Twitch raid, designed."**
 
-[![Build & Verify](https://img.shields.io/badge/Verification-Passing%20(58%2F58)-emerald)](https://github.com/abhijeetnardele24-hash/raidrelay)
+[![Build & Verify](https://img.shields.io/badge/Verification-Passing%20(60%2F60)-emerald)](https://github.com/abhijeetnardele24-hash/raidrelay)
 [![Accessibility](https://img.shields.io/badge/Accessibility-0%20Axe%20Violations%20(Tested%20States)-blue)](https://www.w3.org/WAI/standards-guidelines/wcag/)
 [![Twitch EventSub](https://img.shields.io/badge/Twitch-EventSub%20WebSocket%20v1-purple)](https://dev.twitch.tv/docs/eventsub/)
 [![Codex Session](https://img.shields.io/badge/OpenAI%20Codex-Session%20Verified-blueviolet)](https://github.com/abhijeetnardele24-hash/raidrelay)
@@ -82,14 +82,14 @@ Split-screen evaluation environment featuring streamer controls, simulated chat 
 
 ## Verified Test & Evidence Scorecard
 
-All 58 tests (50 unit/integration, 8 Playwright E2E) and verification gates pass with zero warnings:
+All 60 tests (52 unit/integration, 8 Playwright E2E) and verification gates pass with zero warnings:
 
 | Test Suite | Framework | Status | Evidence Count |
 | :--- | :--- | :--- | :--- |
 | **Domain State Machine & Invariants** | Vitest | PASS | 14/14 tests (transitions, ties, clear, HMAC, timeouts) |
 | **Twitch EventSub Lifecycle & Connection Ladder** | Vitest | PASS | 11/11 tests (connection ladder, reconnect, frame parse, supersession) |
-| **Token Encryption & Lifecycle** | Vitest | PASS | 7/7 tests (AES-256-GCM authenticated encryption, tampering, refresh) |
-| **Server API, CSRF & Channel Isolation** | Vitest | PASS | 18/18 tests (auth, CSRF, origin check, channel isolation, demo namespace) |
+| **Token Encryption & Lifecycle** | Vitest | PASS | 8/8 tests (AES-256-GCM authenticated encryption, tampering, refresh, startup restore) |
+| **Server API, CSRF & Channel Isolation** | Vitest | PASS | 19/19 tests (auth, CSRF, origin check, channel isolation, demo namespace, ambient env isolation) |
 | **End-to-End User Journeys** | Playwright | PASS | 8/8 journeys (Desktop Chrome & 390px Mobile Viewport) |
 | **Accessibility Audit** | Axe Core | PASS | **0 violations in tested states** |
 | **Panic Clear Latency Benchmark** | Benchmark | PASS | **0.2 µs mean / 1.4 µs p99 in-memory state transition** (1,000 iterations) |
@@ -139,7 +139,7 @@ RaidRelay adheres strictly to current Twitch API and EventSub specifications:
 
 - **HMAC Voter Privacy:** Twitch User IDs are salted with a server-side HMAC salt (`HMAC_VOTER_SALT`) before memory storage. Raw user IDs are never stored in the database or exposed in WebSocket frames.
 - **Zero Raw Chat Injection:** No arbitrary viewer chat text is rendered on the broadcast screen. Only structured choice counts (`A` vs `B`) and sanitized broadcaster configuration strings appear on the overlay.
-- **Streamer Panic Button:** The broadcaster console provides an instant single-click **Panic Clear** that immediately halts the in-memory state machine (mean 0.2 µs / p99 1.4 µs) and blanks the OBS overlay in under 50ms over local networks.
+- **Streamer Panic Button:** The broadcaster console provides an instant single-click **Panic Clear** that immediately halts the in-memory state machine (mean 0.2 µs / p99 1.4 µs) and dispatches a transparent idle snapshot to connected broadcast overlays.
 - **Tamper-Evident Receipts:** Every completed ritual produces an HMAC-SHA256 signed digital receipt certifying vote counts and winning choice.
 
 ---

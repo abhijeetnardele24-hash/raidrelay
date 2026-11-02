@@ -31,6 +31,7 @@ export interface DatabaseRepository {
     expiresAt: number
   ): void;
   getEncryptedTokens(broadcasterId: string): EncryptedTokensRecord | null;
+  getLatestEncryptedTokens(): EncryptedTokensRecord | null;
   deleteTokens(broadcasterId: string): void;
   purgeOldEvents(ttlHours?: number): void;
   deleteLocalData(): void;
@@ -370,6 +371,24 @@ const repo: DatabaseRepository = {
     if (!dbInstance) return null;
     const stmt = dbInstance.prepare('SELECT * FROM broadcaster_tokens WHERE broadcaster_id = :id');
     stmt.bind({ ':id': broadcasterId });
+    if (stmt.step()) {
+      const row = stmt.getAsObject();
+      stmt.free();
+      return {
+        broadcasterId: row.broadcaster_id as string,
+        encryptedAccessToken: row.encrypted_access_token as string,
+        encryptedRefreshToken: row.encrypted_refresh_token as string,
+        expiresAt: row.expires_at as number,
+        updatedAt: row.updated_at as string,
+      };
+    }
+    stmt.free();
+    return null;
+  },
+
+  getLatestEncryptedTokens(): EncryptedTokensRecord | null {
+    if (!dbInstance) return null;
+    const stmt = dbInstance.prepare('SELECT * FROM broadcaster_tokens ORDER BY updated_at DESC, rowid DESC LIMIT 1');
     if (stmt.step()) {
       const row = stmt.getAsObject();
       stmt.free();

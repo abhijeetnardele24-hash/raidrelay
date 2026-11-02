@@ -11,7 +11,7 @@
 - **Monorepo Architecture:** Clean pnpm monorepo dividing domain logic, Zod contracts, deterministic fixtures, server, and client into modular packages.
 - **Twitch Developer Integration:** Implements official Twitch EventSub WebSockets (`channel.raid`, `channel.chat.message`), keepalive watchdog, seamless reconnect URL switching, and Helix chat notifications.
 - **Security & Cryptography:** Zero raw chat injection on broadcast screens, HMAC-SHA256 ephemeral voter hashing enforcing `1-person = 1-vote`, tamper-evident receipt signing, CSRF origin protection, and strict CORS.
-- **Test Automation:** 58 automated tests passing (14 domain unit tests, 11 EventSub tests, 7 token encryption tests, 18 server integration tests, 8 Playwright browser journeys across desktop and mobile viewports).
+- **Test Automation:** 60 automated tests passing (14 domain unit tests, 11 EventSub tests, 8 token encryption tests, 19 server integration tests, 8 Playwright browser journeys across desktop and mobile viewports).
 - **Accessibility:** 0 Axe Core automated violations across tested states.
 
 ### 2. Design & Broadcast Polish

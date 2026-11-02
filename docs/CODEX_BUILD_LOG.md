@@ -67,7 +67,7 @@ Codex was utilized not merely as an autocomplete engine, but as an autonomous pr
 Every automated gate passed with exit code 0:
 - **Linting:** `eslint . --max-warnings 0` (0 errors, 0 warnings)
 - **TypeScript:** `tsc --build` (0 errors across 5 monorepo packages)
-- **Unit & Integration:** `vitest run` (50/50 tests passing across domain, eventsub, tokens, and server)
+- **Unit & Integration:** `vitest run` (52/52 tests passing across domain, eventsub, tokens, and server)
 - **E2E Journeys & Accessibility:** `playwright test` (8/8 tests passing, 0 Axe accessibility violations in tested states)
 - **Panic Clear Latency Benchmark:** `tsx scripts/benchmark-panic-clear.ts` (0.2 µs mean / 1.4 µs p99 in-memory state transition across 1,000 iterations)
 - **Secret Scan:** `tsx scripts/security-scan.ts` (0 exposed tokens, 0 unignored .env files across tree & Git history)

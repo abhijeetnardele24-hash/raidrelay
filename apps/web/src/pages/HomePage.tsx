@@ -130,7 +130,7 @@ export const HomePage: React.FC = () => {
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-relay-emerald shrink-0 mt-0.5" />
-                <span><strong>Instant Panic Clear:</strong> One-click emergency button returns the broadcast overlay to transparent idle in under 50ms.</span>
+                <span><strong>Instant Panic Clear:</strong> One-click emergency button returns the broadcast overlay to transparent idle immediately.</span>
               </li>
             </ul>
           </div>

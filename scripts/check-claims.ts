@@ -12,7 +12,12 @@ const FORBIDDEN_CLAIMS = [
   /guaranteed\s+conversion/i,
   /all\s+31\s+tests/i,
   /all\s+43\s+tests/i,
+  /all\s+58\s+tests/i,
   /40%?\s*(to|-)\s*70%/i, // Forbidden uncited drop-off claim
+  /over half/i, // Forbidden uncited drop-off claim
+  /under[- ]50\s*ms/i, // Forbidden unmeasured network claim
+  /production-verified/i, // Forbidden until live Twitch execution exists
+  /visibility:\s*unlisted/i, // Forbidden YouTube visibility
 ];
 
 const SCAN_EXTENSIONS = ['.md', '.ts', '.tsx', '.html', '.json'];

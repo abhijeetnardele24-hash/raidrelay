@@ -56,7 +56,10 @@ if (isProduction) {
   }
 }
 
-let resolvedCodexSessionId = process.env.CODEX_SESSION_ID;
+// 1. Explicit project-scoped override takes precedence; unrelated ambient CODEX_SESSION_ID is ignored
+let resolvedCodexSessionId = process.env.RAIDRELAY_CODEX_SESSION_ID;
+
+// 2. Otherwise use docs/evidence-index.json as canonical submission authority
 if (!resolvedCodexSessionId) {
   try {
     const evidencePath = path.resolve(__dirname, '../../../docs/evidence-index.json');
@@ -70,6 +73,8 @@ if (!resolvedCodexSessionId) {
     // fallback
   }
 }
+
+// 3. Fallback default
 if (!resolvedCodexSessionId) {
   resolvedCodexSessionId = '93a16a2b-a2a0-461f-851b-7a1e342fe97f';
 }

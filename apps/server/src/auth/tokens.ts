@@ -86,6 +86,24 @@ export class TokenManager {
     }
   }
 
+  public getLatestStoredTokens(): DecryptedTokens | null {
+    const record = this.db.getLatestEncryptedTokens();
+    if (!record) return null;
+
+    try {
+      const accessToken = this.encryption.decrypt(record.encryptedAccessToken);
+      const refreshToken = this.encryption.decrypt(record.encryptedRefreshToken);
+      return {
+        broadcasterId: record.broadcasterId,
+        accessToken,
+        refreshToken,
+        expiresAt: record.expiresAt,
+      };
+    } catch {
+      return null;
+    }
+  }
+
   public async getValidAccessToken(
     broadcasterId: string,
     oauth: TwitchOAuthService,

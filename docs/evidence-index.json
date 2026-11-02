@@ -18,10 +18,10 @@
     ]
   },
   "verificationScorecard": {
-    "totalAutomatedTests": 58,
+    "totalAutomatedTests": 60,
     "unitAndIntegrationTests": {
       "framework": "Vitest",
-      "passing": 50,
+      "passing": 52,
       "failing": 0,
       "suites": [
         "tests/unit/domain.test.ts",
@@ -74,6 +74,7 @@
     "judgeTour": "docs/JUDGE_TOUR.md",
     "demoScript": "docs/DEMO_SCRIPT.md",
     "videoSourcePackage": "docs/VIDEO_SOURCE_PACKAGE.md",
+    "twitchRecordingChecklist": "docs/TWITCH_RECORDING_CHECKLIST.md",
     "devpostSubmission": "docs/DEVPOST_SUBMISSION.md",
     "submissionChecklist": "docs/SUBMISSION_CHECKLIST.md",
     "dockerfile": "Dockerfile",

@@ -127,5 +127,16 @@ describe('TokenManager Lifecycle & Proactive Refresh', () => {
     expect(tokenManager.getStoredTokens('broadcaster_42')).toBeNull();
     expect(db.getEncryptedTokens('broadcaster_42')).toBeNull();
   });
+
+  it('retrieves the latest stored encrypted tokens for startup restoration', () => {
+    tokenManager.saveTokens('broadcaster_alpha', 'token_alpha', 'refresh_alpha', Date.now() + 100000);
+    tokenManager.saveTokens('broadcaster_beta', 'token_beta', 'refresh_beta', Date.now() + 200000);
+
+    const latest = tokenManager.getLatestStoredTokens();
+    expect(latest).not.toBeNull();
+    expect(latest?.broadcasterId).toBe('broadcaster_beta');
+    expect(latest?.accessToken).toBe('token_beta');
+    expect(latest?.refreshToken).toBe('refresh_beta');
+  });
 });
 

@@ -8,7 +8,7 @@ The system is architected around four core principles:
 1. **Server-Authoritative State:** Clients (OBS overlays and consoles) are purely reactive viewports. All timers, transitions, vote tallies, and tie-breaking algorithms execute deterministically on the server.
 2. **Zero Arbitrary Chat Injection:** Streamers face constant harassment and hate-raid risks. RaidRelay never renders free-form chat on screen. Only binary vote commands (`!relay A` / `!relay B`) are counted into sanitized numeric meters.
 3. **Tamper-Evident Receipts & Voter Privacy:** Viewers' raw Twitch IDs are never retained or broadcasted. Ephemeral voter hashes prevent duplicate voting without sacrificing privacy.
-4. **Resilient Fail-Safe Defaults:** If Twitch Helix chat fails, the overlay continues. If network sockets disconnect, reconnection backoff preserves ritual state. Streamer panic clear halts all overlays in under 50ms.
+4. **Resilient Fail-Safe Defaults:** If Twitch Helix chat fails, the overlay continues. If network sockets disconnect, reconnection backoff preserves ritual state. Streamer panic clear halts all overlays with sub-microsecond in-memory state transition speed.
 
 ---
 
@@ -62,7 +62,7 @@ stateDiagram-v2
 - **1-Person = 1-Vote:** `voterHash = HMAC_SHA256(userId, HMAC_VOTER_SALT)`. A voter hash can only increment the tally once per ritual ID. Subsequent votes are dropped silently.
 - **Deterministic Tie-Breaking:** In the event of an exact vote tie (e.g. 50% vs 50%), the engine deterministically selects Option A to avoid deadlocks.
 - **Auto-Approve vs Manual Flight Control:** Streamers can enable auto-approval in settings, allowing the majority vote to immediately crown the winner without taking hands off their game controller or keyboard.
-- **Emergency Clear:** The `CLEAR` action functions from any active phase, resetting the overlay to clean transparent idle within 50ms.
+- **Emergency Clear:** The `CLEAR` action functions from any active phase, resetting the overlay state to clean transparent idle immediately.
 
 ---
 

@@ -32,7 +32,7 @@ $$\text{voterHash} = \text{HMAC-SHA256}(\text{twitchUserId}, \text{HMAC\_VOTER\_
 ## 3. Emergency Flight Controls
 
 Streamers retain absolute, instantaneous control over their broadcast:
-- **Panic Clear (`POST /api/ritual/clear`):** Instantly halts active state machines, flushes voter sets, and resets the OBS overlay to transparent in under 50ms.
+- **Panic Clear (`POST /api/ritual/clear`):** Instantly halts active state machines, flushes voter sets, and resets the OBS overlay to transparent.
 - **Manual Override (`POST /api/ritual/:id/override`):** Streamer can override chat votes at any time to select Option A or Option B.
 - **Skip Ritual (`POST /api/ritual/:id/skip`):** Streamer can bypass the vote and advance directly to cooldown if desired.
 
