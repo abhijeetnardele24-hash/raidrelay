@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0c10" />
+      <stop offset="100%" stop-color="#12161f" />
+    </linearGradient>
+    <linearGradient id="twitchGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9146ff" />
+      <stop offset="100%" stop-color="#6441a5" />
+    </linearGradient>
+    <linearGradient id="serverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1f2633" />
+      <stop offset="100%" stop-color="#141a24" />
+    </linearGradient>
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#0891b2" />
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="680" fill="url(#bg)" />
+  <rect x="20" y="20" width="1160" height="640" rx="16" fill="none" stroke="#252e3e" stroke-width="2" />
+
+  <!-- Title Header -->
+  <text x="60" y="65" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" fill="#f8fafc">RaidRelay System Architecture</text>
+  <text x="60" y="90" font-family="monospace" font-size="13" fill="#94a3b8">The first 90 seconds after a Twitch raid, designed • Single Source of Truth Blueprint</text>
+  <rect x="980" y="45" width="160" height="28" rx="6" fill="#1e293b" stroke="#334155" />
+  <text x="1060" y="64" font-family="monospace" font-size="11" font-weight="600" fill="#10b981" text-anchor="middle">CODEX SESSION VERIFIED</text>
+
+  <!-- SECTION 1: Twitch Platform Integration (Left) -->
+  <rect x="60" y="125" width="280" height="490" rx="12" fill="#161524" stroke="#9146ff" stroke-width="1.5" stroke-opacity="0.6" />
+  <rect x="75" y="140" width="140" height="26" rx="4" fill="url(#twitchGrad)" />
+  <text x="145" y="158" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">Twitch Platform</text>
+  
+  <rect x="75" y="185" width="250" height="85" rx="8" fill="#1e1c33" stroke="#383359" />
+  <text x="90" y="210" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#c084fc">EventSub WebSocket</text>
+  <text x="90" y="230" font-family="monospace" font-size="11" fill="#cbd5e1">• channel.raid (v1)</text>
+  <text x="90" y="248" font-family="monospace" font-size="11" fill="#cbd5e1">• channel.chat.message (v1)</text>
+  <text x="90" y="264" font-family="monospace" font-size="10" fill="#94a3b8">Persistent WSS + keepalive</text>
+
+  <rect x="75" y="285" width="250" height="75" rx="8" fill="#1e1c33" stroke="#383359" />
+  <text x="90" y="310" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#c084fc">Twitch Helix REST API</text>
+  <text x="90" y="330" font-family="monospace" font-size="11" fill="#cbd5e1">• Send Chat Message</text>
+  <text x="90" y="348" font-family="monospace" font-size="10" fill="#94a3b8">Welcome notice &amp; Winner card</text>
+
+  <rect x="75" y="375" width="250" height="75" rx="8" fill="#1e1c33" stroke="#383359" />
+  <text x="90" y="400" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#c084fc">Twitch OAuth 2.0</text>
+  <text x="90" y="420" font-family="monospace" font-size="11" fill="#cbd5e1">• Scopes: user:read:chat</text>
+  <text x="90" y="438" font-family="monospace" font-size="11" fill="#cbd5e1">• Scopes: user:write:chat</text>
+
+  <rect x="75" y="465" width="250" height="135" rx="8" fill="#1a1e29" stroke="#334155" />
+  <text x="90" y="490" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#f59e0b">Simulated Demo Lab</text>
+  <text x="90" y="510" font-family="monospace" font-size="11" fill="#94a3b8">• Championship Scenario</text>
+  <text x="90" y="528" font-family="monospace" font-size="11" fill="#94a3b8">• 5 Preset Chat Voter Fixtures</text>
+  <text x="90" y="546" font-family="monospace" font-size="11" fill="#94a3b8">• 10x Fast-forward Replay</text>
+  <rect x="90" y="560" width="220" height="24" rx="4" fill="#0f172a" stroke="#f59e0b" stroke-opacity="0.4" />
+  <text x="200" y="576" font-family="monospace" font-size="10" font-weight="700" fill="#f59e0b" text-anchor="middle">SIMULATED FEED LABEL</text>
+
+  <!-- SECTION 2: RaidRelay Core Server (Center) -->
+  <rect x="380" y="125" width="440" height="490" rx="12" fill="url(#serverGrad)" stroke="#3b82f6" stroke-width="1.5" stroke-opacity="0.6" />
+  <rect x="395" y="140" width="180" height="26" rx="4" fill="#1e3a8a" stroke="#3b82f6" />
+  <text x="485" y="158" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#93c5fd" text-anchor="middle">RaidRelay Fastify Engine</text>
+
+  <!-- Submodule: EventGuard -->
+  <rect x="400" y="185" width="400" height="65" rx="8" fill="#0f172a" stroke="#1e293b" />
+  <text x="415" y="208" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#38bdf8">EventGuard &amp; Security Perimeter</text>
+  <text x="415" y="228" font-family="monospace" font-size="11" fill="#94a3b8">Zod validation • Message deduplication • Replay check (10m TTL)</text>
+
+  <!-- Submodule: State Machine -->
+  <rect x="400" y="260" width="400" height="150" rx="8" fill="#0b1329" stroke="#2563eb" stroke-opacity="0.5" />
+  <text x="415" y="285" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#60a5fa">Deterministic RaidRitualEngine</text>
+  <text x="415" y="305" font-family="monospace" font-size="11" fill="#f8fafc">LANDING (4s) → CONTEXT (6s) → VOTING (30s) → RESULT (8s) → IDLE</text>
+  <text x="415" y="325" font-family="monospace" font-size="11" fill="#10b981">• Invariant: 1 person = 1 vote via HMAC voter hashing</text>
+  <text x="415" y="345" font-family="monospace" font-size="11" fill="#f59e0b">• Flight Controls: Approve, Override (A/B), Skip, Panic Clear</text>
+  <text x="415" y="365" font-family="monospace" font-size="11" fill="#cbd5e1">• Tamper-evident participation receipt HMAC signing</text>
+  <text x="415" y="385" font-family="monospace" font-size="11" fill="#94a3b8">• SourceMode tagging: LIVE_TWITCH vs SIMULATED</text>
+
+  <!-- Submodule: RealtimeHub & DB -->
+  <rect x="400" y="420" width="195" height="180" rx="8" fill="#0f172a" stroke="#1e293b" />
+  <text x="415" y="445" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#a78bfa">RealtimeHub (WS)</text>
+  <text x="415" y="468" font-family="monospace" font-size="10" fill="#94a3b8">• /realtime endpoint</text>
+  <text x="415" y="488" font-family="monospace" font-size="10" fill="#94a3b8">• Monotonic sequence #</text>
+  <text x="415" y="508" font-family="monospace" font-size="10" fill="#94a3b8">• Channel-key routing</text>
+  <text x="415" y="528" font-family="monospace" font-size="10" fill="#94a3b8">• Zero token exposure</text>
+
+  <rect x="605" y="420" width="195" height="180" rx="8" fill="#0f172a" stroke="#1e293b" />
+  <text x="620" y="445" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#a78bfa">Wasm SQLite Storage</text>
+  <text x="620" y="468" font-family="monospace" font-size="10" fill="#94a3b8">• sql.js with disk sync</text>
+  <text x="620" y="488" font-family="monospace" font-size="10" fill="#94a3b8">• broadcaster_config</text>
+  <text x="620" y="508" font-family="monospace" font-size="10" fill="#94a3b8">• rituals &amp; votes</text>
+  <text x="620" y="528" font-family="monospace" font-size="10" fill="#94a3b8">• processed_events</text>
+
+  <!-- SECTION 3: Client Presentation Layer (Right) -->
+  <rect x="860" y="125" width="280" height="490" rx="12" fill="#0f172a" stroke="#10b981" stroke-width="1.5" stroke-opacity="0.6" />
+  <rect x="875" y="140" width="160" height="26" rx="4" fill="url(#emeraldGrad)" />
+  <text x="955" y="158" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">Client Layer (React)</text>
+
+  <rect x="875" y="185" width="250" height="100" rx="8" fill="#13202e" stroke="#10b981" stroke-opacity="0.4" />
+  <text x="890" y="210" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#34d399">OBS Browser Overlay</text>
+  <text x="890" y="230" font-family="monospace" font-size="11" fill="#cbd5e1">• 1920×1080 transparent</text>
+  <text x="890" y="248" font-family="monospace" font-size="11" fill="#cbd5e1">• Two-community split animation</text>
+  <text x="890" y="266" font-family="monospace" font-size="10" fill="#94a3b8">Zero controls, scrollbars, or secrets</text>
+
+  <rect x="875" y="295" width="250" height="100" rx="8" fill="#1e293b" stroke="#334155" />
+  <text x="890" y="320" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#f8fafc">Broadcaster Console</text>
+  <text x="890" y="340" font-family="monospace" font-size="11" fill="#cbd5e1">• Now Card configuration</text>
+  <text x="890" y="358" font-family="monospace" font-size="11" fill="#cbd5e1">• Live vote split tally &amp; meters</text>
+  <text x="890" y="376" font-family="monospace" font-size="10" fill="#94a3b8">Instant flight controls (override/panic)</text>
+
+  <rect x="875" y="405" width="250" height="95" rx="8" fill="#1e293b" stroke="#334155" />
+  <text x="890" y="430" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#f8fafc">Demo Lab (Judges)</text>
+  <text x="890" y="450" font-family="monospace" font-size="11" fill="#cbd5e1">• Split-screen verification</text>
+  <text x="890" y="468" font-family="monospace" font-size="11" fill="#cbd5e1">• Embedded 1080p preview iframe</text>
+  <text x="890" y="486" font-family="monospace" font-size="10" fill="#94a3b8">Truthful simulated banner</text>
+
+  <rect x="875" y="510" width="250" height="90" rx="8" fill="#1e293b" stroke="#334155" />
+  <text x="890" y="535" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#f8fafc">Landing &amp; Tour</text>
+  <text x="890" y="555" font-family="monospace" font-size="11" fill="#cbd5e1">• 60-Second Judge Tour Guide</text>
+  <text x="890" y="573" font-family="monospace" font-size="11" fill="#cbd5e1">• WCAG 2.1 AA accessible</text>
+  <text x="890" y="591" font-family="monospace" font-size="10" fill="#94a3b8">Mobile responsive (390px+)</text>
+
+  <!-- Connective Arrows -->
+  <!-- Left to Center -->
+  <line x1="340" y1="230" x2="380" y2="230" stroke="#9146ff" stroke-width="2" marker-end="url(#arrow)" />
+  <line x1="340" y1="320" x2="380" y2="320" stroke="#9146ff" stroke-width="2" stroke-dasharray="4" />
+  <line x1="340" y1="520" x2="380" y2="520" stroke="#f59e0b" stroke-width="2" />
+
+  <!-- Center to Right -->
+  <line x1="820" y1="235" x2="860" y2="235" stroke="#10b981" stroke-width="2" />
+  <line x1="820" y1="345" x2="860" y2="345" stroke="#38bdf8" stroke-width="2" />
+  <line x1="820" y1="450" x2="860" y2="450" stroke="#f59e0b" stroke-width="2" />
+
+</svg>
+

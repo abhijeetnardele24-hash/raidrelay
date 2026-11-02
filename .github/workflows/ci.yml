@@ -1,0 +1,74 @@
+name: RaidRelay CI Verification Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    env:
+      NODE_ENV: test
+      PORT: 4000
+      HOST: 127.0.0.1
+      APP_BASE_URL: http://localhost:4000
+      SESSION_SECRET: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      HMAC_VOTER_SALT: fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210
+      CODEX_SESSION_ID: 93a16a2b-a2a0-461f-851b-7a1e342fe97f
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 10
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: ESLint Code Quality Gate
+        run: pnpm lint
+
+      - name: Strict TypeScript Compilation
+        run: pnpm typecheck
+
+      - name: Unit & Integration Test Suite
+        run: pnpm test
+
+      - name: Production Monorepo Build
+        run: pnpm build
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Playwright E2E & WCAG 2.1 AA Accessibility Journeys
+        run: pnpm test:e2e
+
+      - name: Security & Secret Leakage Audit
+        run: pnpm test:security
+
+      - name: Truthfulness & Claims Audit
+        run: pnpm test:claims
+
+      - name: Upload Test Results Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-reports
+          path: |
+            docs/*.json
+            playwright-report/
+

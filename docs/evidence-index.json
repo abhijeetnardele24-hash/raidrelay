@@ -1,0 +1,77 @@
+{
+  "project": "RaidRelay",
+  "version": "1.0.0",
+  "hackathon": "Codex x TwitchCon Hackathon 2026",
+  "codexSessionId": "93a16a2b-a2a0-461f-851b-7a1e342fe97f",
+  "baselineCommitSha": "11f28d7f02f18df0133510485b76956803e3b185",
+  "timestamp": "2026-11-02T13:36:00Z",
+  "runtimeMode": {
+    "currentEvaluatedMode": "INTERNAL_COMPLETE_LIVE_TWITCH_EXTERNAL_ACTION_REQUIRED",
+    "supportedModes": [
+      "LIVE_TWITCH",
+      "SIMULATED"
+    ]
+  },
+  "verificationScorecard": {
+    "totalAutomatedTests": 43,
+    "unitAndIntegrationTests": {
+      "framework": "Vitest",
+      "passing": 35,
+      "failing": 0,
+      "suites": [
+        "tests/unit/domain.test.ts",
+        "tests/unit/eventsub.test.ts",
+        "tests/integration/server.test.ts"
+      ]
+    },
+    "browserE2EJourneys": {
+      "framework": "Playwright",
+      "passing": 8,
+      "failing": 0,
+      "viewports": [
+        "Desktop Chromium (1440x900)",
+        "Mobile Viewport (390x844)"
+      ]
+    },
+    "accessibilityAudit": {
+      "engine": "Axe Core",
+      "standard": "WCAG 2.1 AA",
+      "violationsInTestedStates": 0
+    },
+    "securityAudit": {
+      "scanner": "scripts/security-scan.ts",
+      "status": "PASS",
+      "exposedSecretsFound": 0,
+      "gitHistoryClean": true,
+      "reportPath": "docs/security-audit.json"
+    },
+    "claimsAudit": {
+      "auditor": "scripts/check-claims.ts",
+      "status": "PASS",
+      "ungroundedClaimsFound": 0,
+      "reportPath": "docs/claims-audit.json"
+    },
+    "performanceBenchmark": {
+      "benchmark": "scripts/benchmark-panic-clear.ts",
+      "iterations": 1000,
+      "panicClearMeanMs": 0.0002,
+      "panicClearP99Ms": 0.0014
+    }
+  },
+  "deliverables": {
+    "readme": "README.md",
+    "architecture": "docs/ARCHITECTURE.md",
+    "twitchIntegration": "docs/TWITCH_INTEGRATION.md",
+    "securityAndPrivacy": "docs/SECURITY_AND_PRIVACY.md",
+    "codexBuildLog": "docs/CODEX_BUILD_LOG.md",
+    "evaluation": "docs/EVALUATION.md",
+    "judgeTour": "docs/JUDGE_TOUR.md",
+    "demoScript": "docs/DEMO_SCRIPT.md",
+    "videoSourcePackage": "docs/VIDEO_SOURCE_PACKAGE.md",
+    "devpostSubmission": "docs/DEVPOST_SUBMISSION.md",
+    "submissionChecklist": "docs/SUBMISSION_CHECKLIST.md",
+    "dockerfile": "Dockerfile",
+    "ciWorkflow": ".github/workflows/ci.yml"
+  }
+}
+

@@ -1,0 +1,463 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Abhijeet Nardele\\OneDrive\\Desktop\\devpost project\\twitchcon-codex-raidrelay\\raidrelay\\node_modules\\@playwright\\test\\cli.js",
+      "test"
+    ],
+    "configFile": "C:\\Users\\Abhijeet Nardele\\OneDrive\\Desktop\\devpost project\\twitchcon-codex-raidrelay\\raidrelay\\playwright.config.ts",
+    "rootDir": "C:/Users/Abhijeet Nardele/OneDrive/Desktop/devpost project/twitchcon-codex-raidrelay/raidrelay/tests/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Abhijeet Nardele/OneDrive/Desktop/devpost project/twitchcon-codex-raidrelay/raidrelay/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "Desktop Chrome",
+        "name": "Desktop Chrome",
+        "testDir": "C:/Users/Abhijeet Nardele/OneDrive/Desktop/devpost project/twitchcon-codex-raidrelay/raidrelay/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "C:/Users/Abhijeet Nardele/OneDrive/Desktop/devpost project/twitchcon-codex-raidrelay/raidrelay/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "Mobile Viewport (390px)",
+        "name": "Mobile Viewport (390px)",
+        "testDir": "C:/Users/Abhijeet Nardele/OneDrive/Desktop/devpost project/twitchcon-codex-raidrelay/raidrelay/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "C:\\Users\\Abhijeet Nardele\\OneDrive\\Desktop\\devpost project\\twitchcon-codex-raidrelay\\raidrelay\\test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "Desktop Chrome",
+        "testDir": "C:\\Users\\Abhijeet Nardele\\OneDrive\\Desktop\\devpost project\\twitchcon-codex-raidrelay\\raidrelay\\tests\\e2e",
+        "snapshotDir": "C:\\Users\\Abhijeet Nardele\\OneDrive\\Desktop\\devpost project\\twitchcon-codex-raidrelay\\raidrelay\\tests\\e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "baseURL": "http://127.0.0.1:4000",
+          "trace": "off",
+          "channel": "chrome",
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          },
+          "screen": {
+            "width": 1920,
+            "height": 1080
+          },
+          "deviceScaleFactor": 1,
+          "isMobile": false,
+          "hasTouch": false,
+          "defaultBrowserType": "chromium"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "Desktop Chrome"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "C:\\Users\\Abhijeet Nardele\\OneDrive\\Desktop\\devpost project\\twitchcon-codex-raidrelay\\raidrelay\\test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "Mobile Viewport (390px)",
+        "testDir": "C:\\Users\\Abhijeet Nardele\\OneDrive\\Desktop\\devpost project\\twitchcon-codex-raidrelay\\raidrelay\\tests\\e2e",
+        "snapshotDir": "C:\\Users\\Abhijeet Nardele\\OneDrive\\Desktop\\devpost project\\twitchcon-codex-raidrelay\\raidrelay\\tests\\e2e",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "baseURL": "http://127.0.0.1:4000",
+          "trace": "off",
+          "channel": "chrome",
+          "viewport": {
+            "width": 390,
+            "height": 844
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "Mobile Viewport (390px)"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/playwright-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": {
+      "command": "npx tsx apps/server/src/index.ts",
+      "url": "http://127.0.0.1:4000/api/health",
+      "reuseExistingServer": false,
+      "timeout": 30000,
+      "env": {
+        "PORT": "4000",
+        "HOST": "127.0.0.1",
+        "NODE_ENV": "test",
+        "APP_BASE_URL": "http://127.0.0.1:4000",
+        "CORS_ALLOWED_ORIGINS": "http://127.0.0.1:4000,http://localhost:4000",
+        "SESSION_SECRET": "playwright-test-session-secret-at-least-32-chars-long-0123",
+        "HMAC_VOTER_SALT": "playwright-test-voter-salt-at-least-32-chars-long-0123"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "e2e-journey.spec.ts",
+      "file": "e2e-journey.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "RaidRelay End-to-End User Journeys & Accessibility",
+          "file": "e2e-journey.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Home Page renders with thesis, navigation, and passes Axe accessibility audit",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chrome",
+                  "projectName": "Desktop Chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 726,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T13:43:50.659Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fcea6c0b55df4056fff0-67719f11b42eccd2da84",
+              "file": "e2e-journey.spec.ts",
+              "line": 5,
+              "column": 3
+            },
+            {
+              "title": "Broadcaster Console allows editing and saving Now Card configuration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chrome",
+                  "projectName": "Desktop Chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 265,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T13:43:51.567Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fcea6c0b55df4056fff0-5d37a189de3fd0a2a1ac",
+              "file": "e2e-journey.spec.ts",
+              "line": 31,
+              "column": 3
+            },
+            {
+              "title": "Demo Lab runs complete simulated raid handoff journey end-to-end",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chrome",
+                  "projectName": "Desktop Chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2604,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T13:43:51.840Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fcea6c0b55df4056fff0-88d9a07fbdee757f0873",
+              "file": "e2e-journey.spec.ts",
+              "line": 47,
+              "column": 3
+            },
+            {
+              "title": "OBS Overlay renders at 1920x1080 transparently without secret leakage",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Desktop Chrome",
+                  "projectName": "Desktop Chrome",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 176,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T13:43:54.459Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fcea6c0b55df4056fff0-d2004b2fff4616357602",
+              "file": "e2e-journey.spec.ts",
+              "line": 90,
+              "column": 3
+            },
+            {
+              "title": "Home Page renders with thesis, navigation, and passes Axe accessibility audit",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Viewport (390px)",
+                  "projectName": "Mobile Viewport (390px)",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 654,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T13:43:55.273Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fcea6c0b55df4056fff0-dc2409852cdbb06c4e2b",
+              "file": "e2e-journey.spec.ts",
+              "line": 5,
+              "column": 3
+            },
+            {
+              "title": "Broadcaster Console allows editing and saving Now Card configuration",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Viewport (390px)",
+                  "projectName": "Mobile Viewport (390px)",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 235,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T13:43:56.104Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fcea6c0b55df4056fff0-8847cf1ea4a38c340c10",
+              "file": "e2e-journey.spec.ts",
+              "line": 31,
+              "column": 3
+            },
+            {
+              "title": "Demo Lab runs complete simulated raid handoff journey end-to-end",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Viewport (390px)",
+                  "projectName": "Mobile Viewport (390px)",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2639,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T13:43:56.347Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fcea6c0b55df4056fff0-28dc3889647985f0c6a7",
+              "file": "e2e-journey.spec.ts",
+              "line": 47,
+              "column": 3
+            },
+            {
+              "title": "OBS Overlay renders at 1920x1080 transparently without secret leakage",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Viewport (390px)",
+                  "projectName": "Mobile Viewport (390px)",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 170,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-02T13:43:59.001Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "fcea6c0b55df4056fff0-519dce1dffb7e67e3a71",
+              "file": "e2e-journey.spec.ts",
+              "line": 90,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-02T13:43:48.254Z",
+    "duration": 11402.518,
+    "expected": 8,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
