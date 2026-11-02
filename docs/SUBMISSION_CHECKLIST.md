@@ -11,7 +11,7 @@
 - [x] **Monorepo Build:** `pnpm build` succeeds across all 5 workspace packages (`contracts`, `domain`, `fixtures`, `server`, `web`).
 - [x] **Linting:** `pnpm lint` passes with 0 errors and 0 warnings (`--max-warnings 0`).
 - [x] **Strict Typecheck:** `pnpm typecheck` passes with 0 compiler errors.
-- [x] **Unit & Integration Tests:** 52/52 Vitest tests passing in under 2.5 seconds.
+- [x] **Unit & Integration Tests:** 53/53 Vitest tests passing in under 2.5 seconds.
 - [x] **End-to-End User Journeys:** 8/8 Playwright tests passing across Desktop and 390px Mobile viewports.
 - [x] **Accessibility Audit:** 0 Axe Core violations in tested states.
 - [x] **Security Scan:** `pnpm test:security` confirms zero exposed secrets, OAuth tokens, or unignored `.env` files.

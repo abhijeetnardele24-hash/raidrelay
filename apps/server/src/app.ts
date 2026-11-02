@@ -249,8 +249,8 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
     return freshToken;
   };
 
-  // Startup restoration: restore decrypted Twitch credentials if stored in SQLite database
-  const initialTokens = tokenManager.getLatestStoredTokens();
+  // Startup restoration: validate or refresh stored credentials before EventSub connects.
+  const initialTokens = await tokenManager.getLatestValidTokens(oauth);
   if (initialTokens) {
     activeBroadcasterId = initialTokens.broadcasterId;
     activeTwitchToken = initialTokens.accessToken;

@@ -104,6 +104,23 @@ export class TokenManager {
     }
   }
 
+  public async getLatestValidTokens(
+    oauth: TwitchOAuthService,
+    onTokenRefreshed?: (newToken: TwitchUserToken) => void
+  ): Promise<DecryptedTokens | null> {
+    const latest = this.getLatestStoredTokens();
+    if (!latest) return null;
+
+    const accessToken = await this.getValidAccessToken(
+      latest.broadcasterId,
+      oauth,
+      onTokenRefreshed
+    );
+    if (!accessToken) return null;
+
+    return this.getStoredTokens(latest.broadcasterId);
+  }
+
   public async getValidAccessToken(
     broadcasterId: string,
     oauth: TwitchOAuthService,

@@ -41,7 +41,7 @@ RaidRelay is built as a high-performance TypeScript monorepo with verified verti
 - **Server-Authoritative State Engine (`@raidrelay/domain`):** Deterministic finite state machine managing phase durations, monotonic sequence numbers, tie-breaking, and tamper-evident HMAC participation receipt generation.
 - **Backend Service (`apps/server`):** Built with Fastify, native WebSockets, and WebAssembly SQLite (`sql.js`) for disk persistence. Incorporates an **EventGuard** security perimeter that deduplicates Twitch EventSub messages and enforces a 10-minute freshness window.
 - **Broadcast Overlay & Control Console (`apps/web`):** React 18 and Tailwind CSS application rendering a transparent 1920×1080 OBS browser source, a Broadcaster Console workspace, and an interactive **Demo Lab for Judges**.
-- **Automated Verification Pipeline:** 52 Vitest unit/integration tests, 8 Playwright browser journeys across desktop and mobile viewports, Axe Core scans with 0 violations in tested states, and automated secret and truthfulness linters.
+- **Automated Verification Pipeline:** 53 Vitest unit/integration tests, 8 Playwright browser journeys across desktop and mobile viewports, Axe Core scans with 0 violations in tested states, and automated secret and truthfulness linters.
 
 ---
 
@@ -77,7 +77,7 @@ Codex was critical across every engineering milestone:
 
 ## Accomplishments We're Proud Of
 
-- **60/60 Automated Verification Suite:** 100% passing Vitest (52 unit/integration), Playwright (8 E2E journeys across Desktop & Mobile), Axe Core (0 violations in tested states), secret scanner, and claims linter runs on every build.
+- **61/61 Automated Verification Suite:** 100% passing Vitest (53 unit/integration), Playwright (8 E2E journeys across Desktop & Mobile), Axe Core (0 violations in tested states), secret scanner, and claims linter runs on every build.
 - **Zero Axe Violations in Tested States:** Full keyboard navigability, high-contrast broadcast typography, and responsive layouts across desktop (1440px) and mobile (390px).
 - **Real-Time Streamer Flight Controls:** Real-time streamer approval, override, and emergency clear functionality over WebSockets backed by sub-microsecond in-memory state transitions.
 - **Deterministic Judge Tour:** The interactive Demo Lab allows anyone to experience the full 90-second ritual in real time or fast-forwarded at 10x speed with truthful provenance labeling.

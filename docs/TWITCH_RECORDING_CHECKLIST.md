@@ -68,7 +68,7 @@ To qualify for stage-one judging and win the technical implementation criteria, 
 - [ ] Show the overlay blank instantly (0.2 µs mean in-memory state transition).
 
 ### Beat 7: OpenAI Codex Identity & Machine Verification
-- [ ] Open terminal and show `pnpm verify` passing all 60 tests (52 Vitest + 8 Playwright E2E) with 0 errors and 0 warnings.
+- [ ] Open terminal and show `pnpm verify` passing all 61 tests (53 Vitest + 8 Playwright E2E) with 0 errors and 0 warnings.
 - [ ] Show Codex Session ID prominently: **`93a16a2b-a2a0-461f-851b-7a1e342fe97f`**.
 
 ---

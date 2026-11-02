@@ -138,5 +138,24 @@ describe('TokenManager Lifecycle & Proactive Refresh', () => {
     expect(latest?.accessToken).toBe('token_beta');
     expect(latest?.refreshToken).toBe('refresh_beta');
   });
+
+  it('refreshes an expired latest stored token before startup restoration', async () => {
+    tokenManager.saveTokens('broadcaster_expired', 'expired_access', 'valid_refresh', Date.now() - 1);
+
+    const mockOAuth = {
+      refreshToken: vi.fn(async () => ({
+        accessToken: 'restored_fresh_access',
+        refreshToken: 'restored_fresh_refresh',
+        expiresAt: Date.now() + 3600_000,
+      })),
+    } as unknown as TwitchOAuthService;
+
+    const restored = await tokenManager.getLatestValidTokens(mockOAuth);
+
+    expect(mockOAuth.refreshToken).toHaveBeenCalledWith('valid_refresh');
+    expect(restored?.broadcasterId).toBe('broadcaster_expired');
+    expect(restored?.accessToken).toBe('restored_fresh_access');
+    expect(restored?.refreshToken).toBe('restored_fresh_refresh');
+  });
 });
 
