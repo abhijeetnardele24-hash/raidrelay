@@ -34,7 +34,7 @@ $$\text{voterHash} = \text{HMAC-SHA256}(\text{twitchUserId}, \text{HMAC\_VOTER\_
 
 Streamers retain absolute, instantaneous control over their broadcast:
 - **Panic Clear (`POST /api/ritual/clear`):** Instantly halts active state machines, flushes voter sets, and resets the OBS overlay to transparent.
-- **Empirical Benchmark (1,000 iterations):**
+- **Empirical In-Memory State-Transition Benchmark (1,000 iterations):**
   - **Mean Latency:** `0.0002 ms (0.2 µs)`
   - **p50:** `0.0002 ms (0.2 µs)`
   - **p95:** `0.0003 ms (0.3 µs)`

@@ -18,14 +18,15 @@
     ]
   },
   "verificationScorecard": {
-    "totalAutomatedTests": 43,
+    "totalAutomatedTests": 58,
     "unitAndIntegrationTests": {
       "framework": "Vitest",
-      "passing": 35,
+      "passing": 50,
       "failing": 0,
       "suites": [
         "tests/unit/domain.test.ts",
         "tests/unit/eventsub.test.ts",
+        "tests/unit/tokens.test.ts",
         "tests/integration/server.test.ts"
       ]
     },

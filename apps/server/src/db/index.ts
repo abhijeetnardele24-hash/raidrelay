@@ -5,6 +5,14 @@ import crypto from 'node:crypto';
 import type { BroadcasterConfig, RitualSnapshot, SourceMode, RitualState, VoteChoice } from '@raidrelay/contracts';
 import { CHAMPIONSHIP_CONFIG } from '@raidrelay/fixtures';
 
+export interface EncryptedTokensRecord {
+  broadcasterId: string;
+  encryptedAccessToken: string;
+  encryptedRefreshToken: string;
+  expiresAt: number;
+  updatedAt: string;
+}
+
 export interface DatabaseRepository {
   getConfig(broadcasterId: string): BroadcasterConfig | null;
   getConfigByChannelKey(channelKey: string): BroadcasterConfig | null;
@@ -16,6 +24,14 @@ export interface DatabaseRepository {
   hasVoted(ritualId: string, voterHash: string): boolean;
   isEventProcessed(messageId: string): boolean;
   markEventProcessed(messageId: string): void;
+  saveEncryptedTokens(
+    broadcasterId: string,
+    encryptedAccessToken: string,
+    encryptedRefreshToken: string,
+    expiresAt: number
+  ): void;
+  getEncryptedTokens(broadcasterId: string): EncryptedTokensRecord | null;
+  deleteTokens(broadcasterId: string): void;
   purgeOldEvents(ttlHours?: number): void;
   deleteLocalData(): void;
   close(): void;
@@ -88,6 +104,14 @@ export async function initDatabase(sqlitePath: string): Promise<DatabaseReposito
     CREATE TABLE IF NOT EXISTS processed_events (
       message_id TEXT PRIMARY KEY,
       received_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS broadcaster_tokens (
+      broadcaster_id TEXT PRIMARY KEY,
+      encrypted_access_token TEXT NOT NULL,
+      encrypted_refresh_token TEXT NOT NULL,
+      expires_at INTEGER NOT NULL,
+      updated_at TEXT NOT NULL
     );
   `);
 
@@ -322,6 +346,51 @@ const repo: DatabaseRepository = {
     persistToDisk();
   },
 
+  saveEncryptedTokens(
+    broadcasterId: string,
+    encryptedAccessToken: string,
+    encryptedRefreshToken: string,
+    expiresAt: number
+  ): void {
+    if (!dbInstance) return;
+    dbInstance.run(
+      `INSERT INTO broadcaster_tokens (broadcaster_id, encrypted_access_token, encrypted_refresh_token, expires_at, updated_at)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(broadcaster_id) DO UPDATE SET
+         encrypted_access_token = excluded.encrypted_access_token,
+         encrypted_refresh_token = excluded.encrypted_refresh_token,
+         expires_at = excluded.expires_at,
+         updated_at = excluded.updated_at`,
+      [broadcasterId, encryptedAccessToken, encryptedRefreshToken, expiresAt, new Date().toISOString()]
+    );
+    persistToDisk();
+  },
+
+  getEncryptedTokens(broadcasterId: string): EncryptedTokensRecord | null {
+    if (!dbInstance) return null;
+    const stmt = dbInstance.prepare('SELECT * FROM broadcaster_tokens WHERE broadcaster_id = :id');
+    stmt.bind({ ':id': broadcasterId });
+    if (stmt.step()) {
+      const row = stmt.getAsObject();
+      stmt.free();
+      return {
+        broadcasterId: row.broadcaster_id as string,
+        encryptedAccessToken: row.encrypted_access_token as string,
+        encryptedRefreshToken: row.encrypted_refresh_token as string,
+        expiresAt: row.expires_at as number,
+        updatedAt: row.updated_at as string,
+      };
+    }
+    stmt.free();
+    return null;
+  },
+
+  deleteTokens(broadcasterId: string): void {
+    if (!dbInstance) return;
+    dbInstance.run('DELETE FROM broadcaster_tokens WHERE broadcaster_id = ?', [broadcasterId]);
+    persistToDisk();
+  },
+
   purgeOldEvents(ttlHours = 24): void {
     if (!dbInstance) return;
     const cutoff = new Date(Date.now() - ttlHours * 3600 * 1000).toISOString();
@@ -334,6 +403,7 @@ const repo: DatabaseRepository = {
     dbInstance.run('DELETE FROM votes');
     dbInstance.run('DELETE FROM rituals');
     dbInstance.run('DELETE FROM processed_events');
+    dbInstance.run('DELETE FROM broadcaster_tokens');
     dbInstance.run('DELETE FROM broadcaster_config');
     dbInstance.run(
       `INSERT INTO broadcaster_config (

@@ -190,12 +190,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 774,
+                      "duration": 697,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-02T13:52:33.088Z",
+                      "startTime": "2026-11-02T15:24:39.362Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -224,12 +224,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 262,
+                      "duration": 282,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-02T13:52:34.043Z",
+                      "startTime": "2026-11-02T15:24:40.248Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -258,12 +258,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2585,
+                      "duration": 2119,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-02T13:52:34.313Z",
+                      "startTime": "2026-11-02T15:24:40.540Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -273,7 +273,7 @@
               ],
               "id": "fcea6c0b55df4056fff0-88d9a07fbdee757f0873",
               "file": "e2e-journey.spec.ts",
-              "line": 47,
+              "line": 48,
               "column": 3
             },
             {
@@ -292,12 +292,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 185,
+                      "duration": 172,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-02T13:52:36.908Z",
+                      "startTime": "2026-11-02T15:24:42.667Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -307,7 +307,7 @@
               ],
               "id": "fcea6c0b55df4056fff0-d2004b2fff4616357602",
               "file": "e2e-journey.spec.ts",
-              "line": 90,
+              "line": 91,
               "column": 3
             },
             {
@@ -326,12 +326,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 758,
+                      "duration": 766,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-02T13:52:37.930Z",
+                      "startTime": "2026-11-02T15:24:43.399Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -360,12 +360,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 250,
+                      "duration": 257,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-02T13:52:38.913Z",
+                      "startTime": "2026-11-02T15:24:44.344Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -394,12 +394,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2529,
+                      "duration": 2064,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-02T13:52:39.174Z",
+                      "startTime": "2026-11-02T15:24:44.612Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -409,7 +409,7 @@
               ],
               "id": "fcea6c0b55df4056fff0-28dc3889647985f0c6a7",
               "file": "e2e-journey.spec.ts",
-              "line": 47,
+              "line": 48,
               "column": 3
             },
             {
@@ -428,12 +428,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 179,
+                      "duration": 176,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-11-02T13:52:41.713Z",
+                      "startTime": "2026-11-02T15:24:46.685Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -443,7 +443,7 @@
               ],
               "id": "fcea6c0b55df4056fff0-519dce1dffb7e67e3a71",
               "file": "e2e-journey.spec.ts",
-              "line": 90,
+              "line": 91,
               "column": 3
             }
           ]
@@ -453,8 +453,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-11-02T13:52:30.684Z",
-    "duration": 11600.438,
+    "startTime": "2026-11-02T15:24:36.947Z",
+    "duration": 10314.511,
     "expected": 8,
     "skipped": 0,
     "unexpected": 0,

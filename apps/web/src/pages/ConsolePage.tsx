@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   fetchConfig,
+  fetchOverlayCapability,
   updateConfig,
   fetchCurrentRitual,
   approveRitual,
@@ -32,10 +33,17 @@ export const ConsolePage: React.FC = () => {
   const [optionB, setOptionB] = useState('');
   const [autoApprove, setAutoApprove] = useState(false);
 
-  // Config Query
+  // Config Query (Public safe display config)
   const { data: config } = useQuery({
     queryKey: ['config'],
     queryFn: fetchConfig,
+  });
+
+  // Overlay Capability Query (Protected authenticated route)
+  const { data: capabilityData } = useQuery({
+    queryKey: ['overlay-capability'],
+    queryFn: fetchOverlayCapability,
+    retry: false,
   });
 
   useEffect(() => {
@@ -64,6 +72,7 @@ export const ConsolePage: React.FC = () => {
     mutationFn: updateConfig,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['config'] });
+      queryClient.invalidateQueries({ queryKey: ['overlay-capability'] });
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2500);
     },
@@ -82,7 +91,11 @@ export const ConsolePage: React.FC = () => {
   };
 
   const handleCopyOverlay = () => {
-    const channelKey = config?.channelKey || 'demo-channel-key-12345';
+    const channelKey = capabilityData?.channelKey;
+    if (!channelKey) {
+      alert('Authentication required: Connect your broadcaster account to retrieve your private overlay URL.');
+      return;
+    }
     const overlayUrl = `${window.location.origin}/overlay/${channelKey}`;
     navigator.clipboard.writeText(overlayUrl);
     setCopiedOverlayUrl(true);

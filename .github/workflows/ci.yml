@@ -54,7 +54,7 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Playwright E2E & WCAG 2.1 AA Accessibility Journeys
+      - name: Playwright E2E & Accessibility Journeys (0 Axe Violations in Tested States)
         run: pnpm test:e2e
 
       - name: Security & Secret Leakage Audit
@@ -62,6 +62,59 @@ jobs:
 
       - name: Truthfulness & Claims Audit
         run: pnpm test:claims
+
+      - name: Build Production Docker Container
+        run: docker build -t raidrelay:ci .
+
+      - name: Run Production Docker Container Validation
+        run: |
+          docker run -d --name raidrelay-prod \
+            -p 4000:4000 \
+            -e NODE_ENV=production \
+            -e PORT=4000 \
+            -e HOST=0.0.0.0 \
+            -e APP_BASE_URL=http://localhost:4000 \
+            -e SESSION_SECRET=ci-docker-session-secret-at-least-32-chars-long-0123 \
+            -e HMAC_VOTER_SALT=ci-docker-voter-salt-at-least-32-chars-long-0123 \
+            -e CORS_ALLOWED_ORIGINS=http://localhost:4000,http://127.0.0.1:4000 \
+            raidrelay:ci
+          sleep 5
+          docker ps
+
+          echo "Probing container /api/health..."
+          HEALTH_STATUS=$(curl -s http://127.0.0.1:4000/api/health)
+          echo "Health response: $HEALTH_STATUS"
+          echo "$HEALTH_STATUS" | grep '"status":"ok"' || (docker logs raidrelay-prod && exit 1)
+
+          CONTAINER_USER=$(docker exec raidrelay-prod whoami)
+          echo "Container runtime user: $CONTAINER_USER"
+          if [ "$CONTAINER_USER" != "node" ]; then
+            echo "Error: Container must execute as non-root user 'node', found: $CONTAINER_USER"
+            exit 1
+          fi
+
+          echo "Testing production origin protection..."
+          FORBIDDEN_ORIGIN=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Origin: https://malicious-attacker.com" http://127.0.0.1:4000/api/data/delete-local)
+          echo "Untrusted origin response code: $FORBIDDEN_ORIGIN"
+          if [ "$FORBIDDEN_ORIGIN" != "403" ]; then
+            echo "Error: State-changing request from untrusted origin did not return 403, got $FORBIDDEN_ORIGIN"
+            exit 1
+          fi
+
+          echo "Testing demo header bypass rejection..."
+          BYPASS_ATTEMPT=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "x-raidrelay-demo-mode: true" http://127.0.0.1:4000/api/config/rotate-key)
+          echo "Bypass attempt response code: $BYPASS_ATTEMPT"
+          if [ "$BYPASS_ATTEMPT" != "401" ] && [ "$BYPASS_ATTEMPT" != "403" ]; then
+            echo "Error: Protected endpoint did not reject demo-mode header with 401/403, got $BYPASS_ATTEMPT"
+            exit 1
+          fi
+
+          echo "Testing isolated demo endpoint..."
+          DEMO_RES=$(curl -s -X POST http://127.0.0.1:4000/api/demo/ritual/clear)
+          echo "Demo response: $DEMO_RES"
+          echo "$DEMO_RES" | grep '"success":true' || exit 1
+
+          docker stop raidrelay-prod
 
       - name: Upload Test Results Artifacts
         if: always()

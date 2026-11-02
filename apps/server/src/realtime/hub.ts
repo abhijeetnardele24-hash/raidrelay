@@ -12,7 +12,6 @@ export interface ConnectedClient {
 export class RealtimeHub {
   private clients = new Set<ConnectedClient>();
   private snapshotsByBroadcaster = new Map<string, RitualSnapshot>();
-  private lastGlobalSnapshot: RitualSnapshot | null = null;
 
   public registerClient(
     ws: WebSocket,
@@ -29,8 +28,8 @@ export class RealtimeHub {
     };
     this.clients.add(client);
 
-    // Send latest active snapshot for this specific broadcaster
-    const snapshot = this.snapshotsByBroadcaster.get(broadcasterId) || this.lastGlobalSnapshot;
+    // Send latest active snapshot for this specific broadcaster only
+    const snapshot = this.snapshotsByBroadcaster.get(broadcasterId);
     if (snapshot) {
       this.sendToClient(client, snapshot);
     }
@@ -46,23 +45,15 @@ export class RealtimeHub {
     return client;
   }
 
-  public broadcastSnapshot(snapshot: RitualSnapshot, targetBroadcasterId?: string): void {
-    this.lastGlobalSnapshot = snapshot;
-    if (targetBroadcasterId) {
-      this.snapshotsByBroadcaster.set(targetBroadcasterId, snapshot);
-    }
+  public broadcastSnapshot(broadcasterId: string, snapshot: RitualSnapshot): void {
+    this.snapshotsByBroadcaster.set(broadcasterId, snapshot);
 
     const payload = JSON.stringify({ type: 'RITUAL_SNAPSHOT', data: snapshot });
 
     for (const client of this.clients) {
       if (client.ws.readyState === WebSocket.OPEN) {
-        // Enforce channel isolation: send only if client matches broadcasterId or channelKey
-        const matches =
-          !targetBroadcasterId ||
-          client.broadcasterId === targetBroadcasterId ||
-          client.channelKey === 'demo-channel-key-12345'; // Demo lab preview capability
-
-        if (matches) {
+        // Enforce strict channel isolation: send only if client matches broadcasterId
+        if (client.broadcasterId === broadcasterId) {
           try {
             client.ws.send(payload);
           } catch {

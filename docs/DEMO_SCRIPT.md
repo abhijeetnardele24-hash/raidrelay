@@ -37,12 +37,12 @@
 ### [1:40 - 2:05] Streamer Safety & Panic Controls
 - **Visual:** Cut to Broadcaster Console during a simulated raid. Streamer clicks **Override: Option B** (immediately changing the outcome), and then clicks **Panic Clear** (overlay disappears instantly).
 - **Voiceover:**
-  > *"Safety is paramount. RaidRelay never renders free-form chat on screen—completely eliminating hate-raid text injection. And if anything feels off, the streamer has flight controls: override the vote, skip the ritual, or hit Panic Clear to blank the overlay in under 50 milliseconds."*
+  > *"Safety is paramount. RaidRelay never renders free-form chat on screen—completely eliminating hate-raid text injection. And if anything feels off, the streamer has flight controls: override the vote, skip the ritual, or hit Panic Clear to blank the overlay with sub-microsecond state transition speed and sub-50 millisecond broadcast refresh."*
 
 ### [2:05 - 2:30] Built with OpenAI Codex & Verified Pipeline
-- **Visual:** Screen recording of terminal running `pnpm verify`. Shows ESLint passing with 0 warnings, TypeScript checking 0 errors, Vitest passing 23 tests, Playwright passing 8 journeys with 0 Axe accessibility violations, and secret/claims scanners passing. Shows Codex thread `93a16a2b-a2a0-461f-851b-7a1e342fe97f`.
+- **Visual:** Screen recording of terminal running `pnpm verify`. Shows ESLint passing with 0 warnings, TypeScript checking 0 errors, Vitest passing 50 tests, Playwright passing 8 journeys with 0 Axe accessibility violations in tested states, and secret/claims scanners passing. Shows Codex thread `93a16a2b-a2a0-461f-851b-7a1e342fe97f`.
 - **Voiceover:**
-  > *"RaidRelay was engineered end-to-end using OpenAI Codex in Session 93a16a2b-a2a0-461f-851b-7a1e342fe97f. Codex helped architect the deterministic state machine, diagnose native build conflicts down to root cause, and establish a rigorous 43-test verification gate (35 Vitest + 8 Playwright E2E) with zero accessibility violations."*
+  > *"RaidRelay was engineered end-to-end using OpenAI Codex in Session 93a16a2b-a2a0-461f-851b-7a1e342fe97f. Codex helped architect the deterministic state machine, diagnose native build conflicts down to root cause, and establish a rigorous 58-test verification gate (50 Vitest + 8 Playwright E2E) with zero Axe accessibility violations in tested states."*
 
 ### [2:30 - 2:45] Conclusion & Call to Action
 - **Visual:** Hero shot of the RaidRelay landing page and GitHub repository.

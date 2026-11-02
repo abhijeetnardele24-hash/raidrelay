@@ -30,6 +30,9 @@ export const BroadcasterConfigSchema = z.object({
 });
 export type BroadcasterConfig = z.infer<typeof BroadcasterConfigSchema>;
 
+export const PublicBroadcasterConfigSchema = BroadcasterConfigSchema.omit({ channelKey: true });
+export type PublicBroadcasterConfig = z.infer<typeof PublicBroadcasterConfigSchema>;
+
 export const UpdateBroadcasterConfigSchema = z.object({
   activity: z.string().min(1).max(80),
   goal: z.string().min(1).max(100),

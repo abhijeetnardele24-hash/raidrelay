@@ -1,4 +1,5 @@
 import { WebSocket } from 'ws';
+import crypto from 'node:crypto';
 import { request } from 'undici';
 import { config } from '../config.js';
 import type { RaidEvent, ChatMessageEvent } from '@raidrelay/contracts';
@@ -27,9 +28,68 @@ export interface EventSubCallbacks {
   onStatusChange?: (status: EventSubStatus) => void;
 }
 
+export type SubscriptionTransport = (params: {
+  type: string;
+  version: string;
+  condition: Record<string, string>;
+  sessionId: string;
+  clientId: string;
+  accessToken: string;
+}) => Promise<{ success: boolean; error?: string }>;
+
+export async function defaultSubscriptionTransport(params: {
+  type: string;
+  version: string;
+  condition: Record<string, string>;
+  sessionId: string;
+  clientId: string;
+  accessToken: string;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await request('https://api.twitch.tv/helix/eventsub/subscriptions', {
+      method: 'POST',
+      headers: {
+        'Client-ID': params.clientId,
+        Authorization: `Bearer ${params.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: params.type,
+        version: params.version,
+        condition: params.condition,
+        transport: {
+          method: 'websocket',
+          session_id: params.sessionId,
+        },
+      }),
+    });
+
+    if (res.statusCode === 200 || res.statusCode === 202) {
+      return { success: true };
+    }
+
+    const bodyText = await res.body.text();
+    // Sanitize error string: never leak tokens or private request headers
+    const sanitizedMsg = `HTTP ${res.statusCode}: ${bodyText.replace(/Bearer\s+[a-zA-Z0-9\-_.]+/gi, 'Bearer [REDACTED]').substring(0, 100)}`;
+    return { success: false, error: sanitizedMsg };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const sanitizedMsg = msg.replace(/Bearer\s+[a-zA-Z0-9\-_.]+/gi, 'Bearer [REDACTED]');
+    return { success: false, error: sanitizedMsg };
+  }
+}
+
+interface TrackedSocket {
+  ws: WebSocket;
+  id: string;
+  generation: number;
+}
+
 export class TwitchEventSubClient {
-  private activeWs: WebSocket | null = null;
-  private reconnectingWs: WebSocket | null = null;
+  private activeSocket: TrackedSocket | null = null;
+  private reconnectingSocket: TrackedSocket | null = null;
+  private generation = 0;
+
   private status: EventSubStatus = 'NOT_CONFIGURED';
   private sessionId: string | null = null;
   private keepaliveTimer: NodeJS.Timeout | null = null;
@@ -44,11 +104,16 @@ export class TwitchEventSubClient {
   private readonly maxBackoffMs = 15000;
   private reconnectTimer: NodeJS.Timeout | null = null;
 
+  private subscriptionTransport: SubscriptionTransport;
+
   constructor(
     private callbacks: EventSubCallbacks,
     private wsUrl = config.TWITCH_EVENTSUB_WS_URL,
-    private clientId = config.TWITCH_CLIENT_ID
-  ) {}
+    private clientId = config.TWITCH_CLIENT_ID,
+    customTransport?: SubscriptionTransport
+  ) {
+    this.subscriptionTransport = customTransport || defaultSubscriptionTransport;
+  }
 
   public getStatus(): EventSubStatus {
     return this.status;
@@ -81,6 +146,10 @@ export class TwitchEventSubClient {
     this.setStatus('NOT_CONFIGURED');
   }
 
+  public setSubscriptionTransport(transport: SubscriptionTransport): void {
+    this.subscriptionTransport = transport;
+  }
+
   public connect(customUrl?: string): void {
     if (!this.activeAccessToken || !this.activeBroadcasterId) {
       this.setStatus('NOT_CONFIGURED');
@@ -98,12 +167,21 @@ export class TwitchEventSubClient {
     this.reconnectUrl = null;
 
     try {
+      this.generation += 1;
+      const socketId = crypto.randomUUID();
+      const currentGen = this.generation;
       const ws = new WebSocket(targetUrl);
 
+      const tracked: TrackedSocket = {
+        ws,
+        id: socketId,
+        generation: currentGen,
+      };
+
       if (isReconnecting) {
-        this.reconnectingWs = ws;
+        this.reconnectingSocket = tracked;
       } else {
-        this.activeWs = ws;
+        this.activeSocket = tracked;
       }
 
       ws.on('open', () => {
@@ -111,15 +189,15 @@ export class TwitchEventSubClient {
       });
 
       ws.on('message', (data: Buffer | string) => {
-        this.handleMessage(data.toString(), ws);
+        this.handleMessage(data.toString(), tracked);
       });
 
       ws.on('close', (code, _reason) => {
-        this.handleSocketClose(ws, code);
+        this.handleSocketClose(tracked, code);
       });
 
       ws.on('error', () => {
-        this.handleSocketClose(ws, 1006);
+        this.handleSocketClose(tracked, 1006);
       });
     } catch {
       this.scheduleReconnect();
@@ -128,46 +206,47 @@ export class TwitchEventSubClient {
 
   public disconnect(): void {
     this.clearTimers();
-    if (this.activeWs) {
+    if (this.activeSocket) {
       try {
-        this.activeWs.close(1000, 'Client disconnecting');
+        this.activeSocket.ws.close(1000, 'Client disconnecting');
       } catch {
         // ignore
       }
-      this.activeWs = null;
+      this.activeSocket = null;
     }
-    if (this.reconnectingWs) {
+    if (this.reconnectingSocket) {
       try {
-        this.reconnectingWs.close(1000, 'Superseded');
+        this.reconnectingSocket.ws.close(1000, 'Superseded');
       } catch {
         // ignore
       }
-      this.reconnectingWs = null;
+      this.reconnectingSocket = null;
     }
     this.sessionId = null;
     this.acceptedSubscriptions.clear();
     this.setStatus(this.activeAccessToken ? 'DISCONNECTED' : 'NOT_CONFIGURED');
   }
 
-  private handleSocketClose(ws: WebSocket, code: number): void {
-    // If the closed socket was an old socket superseded by a reconnect, do not drop live state
-    if (this.reconnectingWs && ws === this.activeWs) {
-      this.activeWs = null;
-      return;
-    }
-
-    if (ws === this.reconnectingWs) {
-      this.reconnectingWs = null;
-      // Reconnect socket failed; fall back to active or reconnect
-      if (!this.activeWs) {
+  private handleSocketClose(socket: TrackedSocket, code: number): void {
+    // If closed socket is reconnecting socket:
+    if (this.reconnectingSocket && socket.id === this.reconnectingSocket.id) {
+      this.reconnectingSocket = null;
+      if (!this.activeSocket) {
         this.setStatus('DISCONNECTED');
         this.scheduleReconnect();
       }
       return;
     }
 
+    // If closed socket is neither active nor reconnecting, it was an old superseded socket!
+    // CRITICAL FIX: closing an old socket MUST NEVER clear new active socket, session ID, keepalive, or status!
+    if (!this.activeSocket || socket.id !== this.activeSocket.id) {
+      return;
+    }
+
+    // The active socket closed
     this.clearKeepalive();
-    this.activeWs = null;
+    this.activeSocket = null;
     this.sessionId = null;
     this.acceptedSubscriptions.clear();
     this.setStatus('DISCONNECTED');
@@ -191,32 +270,47 @@ export class TwitchEventSubClient {
     }, delay);
   }
 
-  private handleMessage(raw: string, socket: WebSocket): void {
+  private handleMessage(raw: string, socket: TrackedSocket): void {
     try {
       const msg = JSON.parse(raw);
       const messageType = msg.metadata?.message_type;
 
       switch (messageType) {
         case 'session_welcome': {
-          // If this was a reconnecting socket, promote it to active and cleanly close old socket
-          if (socket === this.reconnectingWs) {
-            if (this.activeWs) {
+          const isReconnectPromotion = Boolean(
+            this.reconnectingSocket && socket.id === this.reconnectingSocket.id
+          );
+
+          if (isReconnectPromotion) {
+            const oldSocket = this.activeSocket;
+            this.activeSocket = this.reconnectingSocket;
+            this.reconnectingSocket = null;
+            if (oldSocket) {
               try {
-                this.activeWs.close(1000, 'Superseded by reconnect');
+                oldSocket.ws.close(1000, 'Superseded by reconnect');
               } catch {
                 // ignore
               }
             }
-            this.activeWs = this.reconnectingWs;
-            this.reconnectingWs = null;
           }
 
           this.sessionId = msg.payload?.session?.id;
           this.keepaliveTimeoutSec = msg.payload?.session?.keepalive_timeout_seconds || 10;
           this.resetKeepalive();
 
-          // Immediately register all required subscriptions
-          this.executeSubscriptionRegistration();
+          // Twitch EventSub reconnect specification:
+          // If reconnecting, Twitch transfers existing subscriptions to the new session automatically!
+          // We must NOT create duplicate subscriptions if reconnecting!
+          if (isReconnectPromotion) {
+            // Retain existing subscriptions without duplicates
+            const allEnabled = Array.from(this.acceptedSubscriptions.values()).every(
+              (s) => s.status === 'enabled'
+            );
+            this.setStatus(allEnabled && this.acceptedSubscriptions.size >= 2 ? 'LIVE_READY' : 'DEGRADED');
+          } else {
+            // Fresh connection: register required subscriptions
+            void this.executeSubscriptionRegistration();
+          }
           break;
         }
 
@@ -282,7 +376,7 @@ export class TwitchEventSubClient {
         }
       }
     } catch {
-      // Malformed message handling: ignore malformed frames safely
+      // Malformed message handling: safely ignore malformed JSON or frames
     }
   }
 
@@ -293,19 +387,23 @@ export class TwitchEventSubClient {
 
     this.setStatus('SUBSCRIBING');
 
-    const raidSub = await this.createSubscription(
-      'channel.raid',
-      '1',
-      { to_broadcaster_user_id: this.activeBroadcasterId },
-      this.activeAccessToken
-    );
+    const raidSub = await this.subscriptionTransport({
+      type: 'channel.raid',
+      version: '1',
+      condition: { to_broadcaster_user_id: this.activeBroadcasterId },
+      sessionId: this.sessionId,
+      clientId: this.clientId,
+      accessToken: this.activeAccessToken,
+    });
 
-    const chatSub = await this.createSubscription(
-      'channel.chat.message',
-      '1',
-      { broadcaster_user_id: this.activeBroadcasterId, user_id: this.activeBroadcasterId },
-      this.activeAccessToken
-    );
+    const chatSub = await this.subscriptionTransport({
+      type: 'channel.chat.message',
+      version: '1',
+      condition: { broadcaster_user_id: this.activeBroadcasterId, user_id: this.activeBroadcasterId },
+      sessionId: this.sessionId,
+      clientId: this.clientId,
+      accessToken: this.activeAccessToken,
+    });
 
     if (raidSub.success && chatSub.success) {
       this.acceptedSubscriptions.set('channel.raid', {
@@ -328,52 +426,30 @@ export class TwitchEventSubClient {
           version: '1',
           status: 'enabled',
         });
+      } else {
+        this.acceptedSubscriptions.set('channel.raid', {
+          type: 'channel.raid',
+          version: '1',
+          status: 'failed',
+          error: raidSub.error || 'Registration failed',
+        });
       }
+
       if (chatSub.success) {
         this.acceptedSubscriptions.set('channel.chat.message', {
           type: 'channel.chat.message',
           version: '1',
           status: 'enabled',
         });
+      } else {
+        this.acceptedSubscriptions.set('channel.chat.message', {
+          type: 'channel.chat.message',
+          version: '1',
+          status: 'failed',
+          error: chatSub.error || 'Registration failed',
+        });
       }
       this.setStatus('DEGRADED');
-    }
-  }
-
-  private async createSubscription(
-    type: string,
-    version: string,
-    condition: Record<string, string>,
-    accessToken: string
-  ): Promise<{ success: boolean; error?: string }> {
-    try {
-      const res = await request('https://api.twitch.tv/helix/eventsub/subscriptions', {
-        method: 'POST',
-        headers: {
-          'Client-ID': this.clientId,
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type,
-          version,
-          condition,
-          transport: {
-            method: 'websocket',
-            session_id: this.sessionId,
-          },
-        }),
-      });
-
-      if (res.statusCode === 200 || res.statusCode === 202) {
-        return { success: true };
-      }
-
-      const bodyText = await res.body.text();
-      return { success: false, error: `HTTP ${res.statusCode}: ${bodyText.substring(0, 100)}` };
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      return { success: false, error: msg };
     }
   }
 
@@ -383,9 +459,9 @@ export class TwitchEventSubClient {
     const timeoutMs = (this.keepaliveTimeoutSec + 3) * 1000;
     this.keepaliveTimer = setTimeout(() => {
       // Keepalive expired; socket is stale
-      if (this.activeWs) {
+      if (this.activeSocket) {
         try {
-          this.activeWs.close(4000, 'Keepalive watchdog timeout');
+          this.activeSocket.ws.close(4000, 'Keepalive watchdog timeout');
         } catch {
           // ignore
         }

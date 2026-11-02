@@ -29,6 +29,7 @@ test.describe('RaidRelay End-to-End User Journeys & Accessibility', () => {
   });
 
   test('Broadcaster Console allows editing and saving Now Card configuration', async ({ page }) => {
+    await page.request.post('/api/auth/dev-login');
     await page.goto('/console');
 
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Broadcaster Control Workspace');

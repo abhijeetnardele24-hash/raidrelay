@@ -15,8 +15,9 @@ import { RealtimeHub } from './realtime/hub.js';
 import { EventGuard } from './twitch/guard.js';
 import { TwitchOAuthService } from './twitch/oauth.js';
 import { TwitchChatService } from './twitch/chat.js';
-import { TwitchEventSubClient } from './twitch/eventsub.js';
+import { TwitchEventSubClient, SubscriptionTransport } from './twitch/eventsub.js';
 import { DemoAdapter } from './demo/adapter.js';
+import { TokenManager } from './auth/tokens.js';
 import {
   sessionManager,
   getSessionFromRequest,
@@ -31,6 +32,7 @@ import {
 } from '@raidrelay/domain';
 import type {
   BroadcasterConfig,
+  PublicBroadcasterConfig,
   SourceMode,
   RaidEvent,
   ChatMessageEvent,
@@ -47,13 +49,17 @@ const __dirname = path.dirname(__filename);
 export interface BuildAppOptions {
   databasePath?: string;
   enableEventSubAutoConnect?: boolean;
+  subscriptionTransport?: SubscriptionTransport;
 }
 
 export async function buildApp(options: BuildAppOptions = {}): Promise<{
   app: FastifyInstance;
   db: DatabaseRepository;
   hub: RealtimeHub;
+  tokenManager: TokenManager;
   engine: () => RaidRitualEngine | null;
+  demoEngine: () => RaidRitualEngine | null;
+  getDemoChannelKey: () => string;
   startSimulatedRaid: (options?: { speedMultiplier?: number }) => void;
 }> {
   const app = Fastify({
@@ -65,14 +71,31 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
   const guard = new EventGuard(db);
   const oauth = new TwitchOAuthService();
   const chatService = new TwitchChatService();
+  const tokenManager = new TokenManager(db, config.SESSION_SECRET);
 
+  // Separate live ritual state and simulated demo ritual state
   let activeEngine: RaidRitualEngine | null = null;
+  let demoEngine: RaidRitualEngine | null = null;
   let pendingRaid: RaidEvent | null = null;
   let activeTwitchToken: string | null = null;
   let activeBroadcasterId: string | null = null;
-  let lastBroadcastState: string = '';
+  let lastLiveBroadcastState: string = '';
+  let lastDemoBroadcastState: string = '';
 
-  const demoAdapter = new DemoAdapter(() => activeEngine);
+  // Dedicated demo channel configuration with secure ephemeral capability key
+  const DEMO_BROADCASTER_ID = 'demo-channel';
+  const DEMO_CHANNEL_KEY = crypto.randomBytes(16).toString('hex');
+
+  // Register demo channel in db
+  db.saveConfig({
+    ...CHAMPIONSHIP_CONFIG,
+    broadcasterId: DEMO_BROADCASTER_ID,
+    displayName: 'Demo Broadcaster',
+    channelKey: DEMO_CHANNEL_KEY,
+    updatedAt: new Date().toISOString(),
+  });
+
+  const demoAdapter = new DemoAdapter(() => demoEngine);
 
   const startLiveRaid = (validatedRaid: RaidEvent) => {
     const currentConfig = db.getConfig(validatedRaid.toBroadcasterId) || CHAMPIONSHIP_CONFIG;
@@ -86,7 +109,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
 
     const snapshot = activeEngine.toSnapshot();
     db.saveRitual(snapshot);
-    hub.broadcastSnapshot(snapshot, currentConfig.broadcasterId);
+    hub.broadcastSnapshot(currentConfig.broadcasterId, snapshot);
 
     // Send optional bot announcement message to Twitch chat safely
     if (activeTwitchToken && activeBroadcasterId) {
@@ -101,29 +124,44 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
     }
   };
 
-  // Periodic engine tick interval (100ms for responsiveness)
+  // Periodic engine tick interval (100ms for live and demo)
   const tickInterval = setInterval(() => {
+    const now = Date.now();
+
+    // 1. Tick live broadcaster ritual
     if (activeEngine) {
-      const now = Date.now();
       activeEngine.tick(now);
       const snapshot = activeEngine.toSnapshot(now);
-
-      // Broadcast on state/vote change or at least once a second
       const stateKey = `${snapshot.state}-${snapshot.votesA}-${snapshot.votesB}-${Math.round(snapshot.timeRemainingMs / 1000)}`;
-      if (stateKey !== lastBroadcastState) {
-        lastBroadcastState = stateKey;
+      if (stateKey !== lastLiveBroadcastState) {
+        lastLiveBroadcastState = stateKey;
         db.saveRitual(snapshot);
-        hub.broadcastSnapshot(snapshot);
+        const targetId = activeBroadcasterId || '123456789';
+        hub.broadcastSnapshot(targetId, snapshot);
       }
 
       if (snapshot.state === 'IDLE') {
         activeEngine = null;
-        // If a concurrent raid arrived while the previous was active, start it now
         if (pendingRaid) {
           const nextRaid = pendingRaid;
           pendingRaid = null;
           startLiveRaid(nextRaid);
         }
+      }
+    }
+
+    // 2. Tick demo lab ritual
+    if (demoEngine) {
+      demoEngine.tick(now);
+      const demoSnap = demoEngine.toSnapshot(now);
+      const demoStateKey = `${demoSnap.state}-${demoSnap.votesA}-${demoSnap.votesB}-${Math.round(demoSnap.timeRemainingMs / 1000)}`;
+      if (demoStateKey !== lastDemoBroadcastState) {
+        lastDemoBroadcastState = demoStateKey;
+        hub.broadcastSnapshot(DEMO_BROADCASTER_ID, demoSnap);
+      }
+
+      if (demoSnap.state === 'IDLE') {
+        demoEngine = null;
       }
     }
   }, 100);
@@ -173,14 +211,20 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
       db.recordVote(activeEngine.getId(), voterHash, choice);
       const snapshot = activeEngine.toSnapshot();
       db.saveRitual(snapshot);
-      hub.broadcastSnapshot(snapshot);
+      const targetId = activeBroadcasterId || '123456789';
+      hub.broadcastSnapshot(targetId, snapshot);
     }
   };
 
-  const eventSub = new TwitchEventSubClient({
-    onRaid: handleIncomingRaid,
-    onChatMessage: handleIncomingChat,
-  });
+  const eventSub = new TwitchEventSubClient(
+    {
+      onRaid: handleIncomingRaid,
+      onChatMessage: handleIncomingChat,
+    },
+    config.TWITCH_EVENTSUB_WS_URL,
+    config.TWITCH_CLIENT_ID,
+    options.subscriptionTransport
+  );
 
   // Strict CORS Plugin
   await app.register(cors, {
@@ -226,13 +270,8 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
       return;
     }
 
-    // Validate capability against database
-    let broadcasterConfig = db.getConfigByChannelKey(channelKey);
-    // Allow demo lab capability for test/evaluation
-    if (!broadcasterConfig && channelKey === 'demo-channel-key-12345') {
-      broadcasterConfig = CHAMPIONSHIP_CONFIG;
-    }
-
+    // Validate capability strictly against database
+    const broadcasterConfig = db.getConfigByChannelKey(channelKey);
     if (!broadcasterConfig) {
       socket.close(4403, 'Invalid or revoked channel capability key');
       return;
@@ -304,20 +343,40 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
     return reply.send({ success: true, message: 'Logged out successfully.' });
   });
 
-  // 4. Broadcaster Configuration (Protected)
+  // 4. Broadcaster Configuration
+  // Public DTO: returns display context WITHOUT leaking channelKey to unauthenticated callers
   app.get('/api/config', async (_req, reply) => {
-    const currentConfig = db.getConfig(activeBroadcasterId || '123456789') || CHAMPIONSHIP_CONFIG;
+    const broadcasterId = activeBroadcasterId || '123456789';
+    const currentConfig = db.getConfig(broadcasterId) || CHAMPIONSHIP_CONFIG;
+    // Omit channelKey for public unauthenticated access
+    const { channelKey: _omittedKey, ...publicConfig }: BroadcasterConfig = currentConfig;
+    return reply.send(publicConfig as PublicBroadcasterConfig);
+  });
+
+  // Authenticated Private DTO: returns full config including overlay capability
+  app.get('/api/config/private', async (req, reply) => {
+    const session = await requireBroadcasterAuth(req, reply);
+    if (!session) return;
+
+    const currentConfig = db.getConfig(session.broadcasterId) || CHAMPIONSHIP_CONFIG;
     return reply.send(currentConfig);
   });
 
-  app.put('/api/config', async (req, reply) => {
-    const session = await requireBroadcasterAuth(req, reply, { allowDemoSimulation: true });
-    // In strict mode, if requireBroadcasterAuth returned null without demo bypass, it already replied with 401/403
-    if (!session && req.headers['x-raidrelay-demo-mode'] !== 'true' && config.NODE_ENV === 'production') {
-      return;
-    }
+  // Authenticated Overlay Capability Route
+  app.get('/api/overlay-capability', async (req, reply) => {
+    const session = await requireBroadcasterAuth(req, reply);
+    if (!session) return;
 
-    const broadcasterId = session?.broadcasterId || activeBroadcasterId || '123456789';
+    const currentConfig = db.getConfig(session.broadcasterId) || CHAMPIONSHIP_CONFIG;
+    return reply.send({ success: true, channelKey: currentConfig.channelKey });
+  });
+
+  // Update Broadcaster Configuration (Protected)
+  app.put('/api/config', async (req, reply) => {
+    const session = await requireBroadcasterAuth(req, reply);
+    if (!session) return;
+
+    const broadcasterId = session.broadcasterId;
     const parseRes = UpdateBroadcasterConfigSchema.safeParse(req.body);
     if (!parseRes.success) {
       return reply.status(400).send({ error: 'INVALID_CONFIG', details: parseRes.error.format() });
@@ -341,8 +400,10 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
 
   // Rotate overlay capability key (Protected)
   app.post('/api/config/rotate-key', async (req, reply) => {
-    const session = await requireBroadcasterAuth(req, reply, { allowDemoSimulation: true });
-    const broadcasterId = session?.broadcasterId || activeBroadcasterId || '123456789';
+    const session = await requireBroadcasterAuth(req, reply);
+    if (!session) return;
+
+    const broadcasterId = session.broadcasterId;
     const existing = db.getConfig(broadcasterId);
     if (existing) {
       hub.revokeChannelKey(existing.channelKey);
@@ -351,7 +412,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
     return reply.send({ success: true, channelKey: newKey });
   });
 
-  // 5. Current Ritual Snapshot
+  // 5. Current Live Ritual Snapshot
   app.get('/api/ritual/current', async (_req, reply) => {
     if (!activeEngine) {
       return reply.send({
@@ -367,10 +428,10 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
     });
   });
 
-  // 6. Broadcaster Controls: Approve, Override, Skip, Clear (Protected)
+  // 6. Broadcaster Controls: Approve, Override, Skip, Clear (Protected - Live ritual only)
   app.post('/api/ritual/:id/approve', async (req, reply) => {
-    await requireBroadcasterAuth(req, reply, { allowDemoSimulation: true });
-    if (reply.sent) return;
+    const session = await requireBroadcasterAuth(req, reply);
+    if (!session) return;
 
     if (!activeEngine) {
       return reply.status(404).send({ error: 'NO_ACTIVE_RITUAL' });
@@ -383,7 +444,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
 
     const snap = activeEngine.toSnapshot();
     db.saveRitual(snap);
-    hub.broadcastSnapshot(snap);
+    hub.broadcastSnapshot(session.broadcasterId, snap);
 
     // Send final result message to Twitch chat safely
     if (activeTwitchToken && activeBroadcasterId && snap.selectedOption) {
@@ -402,8 +463,8 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
   });
 
   app.post('/api/ritual/:id/override', async (req, reply) => {
-    await requireBroadcasterAuth(req, reply, { allowDemoSimulation: true });
-    if (reply.sent) return;
+    const session = await requireBroadcasterAuth(req, reply);
+    if (!session) return;
 
     if (!activeEngine) {
       return reply.status(404).send({ error: 'NO_ACTIVE_RITUAL' });
@@ -422,14 +483,14 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
 
     const snap = activeEngine.toSnapshot();
     db.saveRitual(snap);
-    hub.broadcastSnapshot(snap);
+    hub.broadcastSnapshot(session.broadcasterId, snap);
 
     return reply.send({ success: true, snapshot: snap });
   });
 
   app.post('/api/ritual/:id/skip', async (req, reply) => {
-    await requireBroadcasterAuth(req, reply, { allowDemoSimulation: true });
-    if (reply.sent) return;
+    const session = await requireBroadcasterAuth(req, reply);
+    if (!session) return;
 
     if (!activeEngine) {
       return reply.status(404).send({ error: 'NO_ACTIVE_RITUAL' });
@@ -438,31 +499,42 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
     const success = activeEngine.handleStreamerAction({ action: 'SKIP' });
     const snap = activeEngine.toSnapshot();
     db.saveRitual(snap);
-    hub.broadcastSnapshot(snap);
+    hub.broadcastSnapshot(session.broadcasterId, snap);
 
     return reply.send({ success, snapshot: snap });
   });
 
   app.post('/api/ritual/clear', async (req, reply) => {
-    await requireBroadcasterAuth(req, reply, { allowDemoSimulation: true });
-    if (reply.sent) return;
+    const session = await requireBroadcasterAuth(req, reply);
+    if (!session) return;
 
     if (!activeEngine) {
       return reply.send({ success: true, message: 'Already idle' });
     }
 
     activeEngine.handleStreamerAction({ action: 'CLEAR' });
-    demoAdapter.stop();
     const snap = activeEngine.toSnapshot();
     db.saveRitual(snap);
-    hub.broadcastSnapshot(snap);
+    hub.broadcastSnapshot(session.broadcasterId, snap);
 
     return reply.send({ success: true, snapshot: snap });
   });
 
-  // 7. Demo Lab Controls (Unrestricted for hackathon judge evaluation)
+  // 7. Dedicated Demo Lab Endpoints (/api/demo/*)
+  // Demo Lab operates on a completely separate simulated ritual namespace (demoEngine & DEMO_BROADCASTER_ID)
+  app.get('/api/demo/capability', async () => {
+    return { success: true, channelKey: DEMO_CHANNEL_KEY };
+  });
+
+  app.get('/api/demo/ritual/current', async () => {
+    if (!demoEngine) {
+      return { active: false, ritual: null };
+    }
+    return { active: true, ritual: demoEngine.toSnapshot() };
+  });
+
   const startSimulatedRaidFn = (opts: { speedMultiplier?: number } = {}) => {
-    const currentConfig = db.getConfig('123456789') || CHAMPIONSHIP_CONFIG;
+    const demoConfig = db.getConfig(DEMO_BROADCASTER_ID) || CHAMPIONSHIP_CONFIG;
     const mult = Math.max(1, opts.speedMultiplier || 1);
     const scaledDurations = {
       landingDurationMs: Math.max(200, Math.round(DEFAULT_DURATIONS.landingDurationMs / mult)),
@@ -472,28 +544,27 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
       resultDurationMs: Math.max(500, Math.round(DEFAULT_DURATIONS.resultDurationMs / mult)),
       cooldownDurationMs: Math.max(300, Math.round(DEFAULT_DURATIONS.cooldownDurationMs / mult)),
     };
-    activeEngine = new RaidRitualEngine({
+
+    demoEngine = new RaidRitualEngine({
       id: crypto.randomUUID(),
       raidEvent: {
         ...SAMPLE_SIMULATED_RAID,
         messageId: `sim-raid-msg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         timestamp: new Date().toISOString(),
       },
-      config: currentConfig,
+      config: demoConfig,
       durations: scaledDurations,
     });
 
-    const snap = activeEngine.toSnapshot();
-    db.saveRitual(snap);
-    hub.broadcastSnapshot(snap);
+    const snap = demoEngine.toSnapshot();
+    hub.broadcastSnapshot(DEMO_BROADCASTER_ID, snap);
 
     demoAdapter.runScenario({
       speedMultiplier: opts.speedMultiplier || 1,
       onUpdate: () => {
-        if (activeEngine) {
-          const updated = activeEngine.toSnapshot();
-          db.saveRitual(updated);
-          hub.broadcastSnapshot(updated);
+        if (demoEngine) {
+          const updated = demoEngine.toSnapshot();
+          hub.broadcastSnapshot(DEMO_BROADCASTER_ID, updated);
         }
       },
     });
@@ -506,19 +577,18 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
       success: true,
       message: 'Simulated raid ritual launched in Demo Lab.',
       sourceMode: 'SIMULATED',
-      snapshot: activeEngine?.toSnapshot(),
+      snapshot: demoEngine?.toSnapshot(),
     });
   });
 
   app.post('/api/demo/reset', async (_req, reply) => {
     demoAdapter.stop();
-    if (activeEngine) {
-      activeEngine.handleStreamerAction({ action: 'CLEAR' });
-      activeEngine = null;
+    if (demoEngine) {
+      demoEngine.handleStreamerAction({ action: 'CLEAR' });
+      demoEngine = null;
     }
 
-    // Broadcast idle
-    hub.broadcastSnapshot({
+    hub.broadcastSnapshot(DEMO_BROADCASTER_ID, {
       id: 'idle',
       twitchMessageId: null,
       sourceMode: 'SIMULATED',
@@ -544,13 +614,61 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
     return reply.send({ success: true, message: 'Demo Lab reset to clean IDLE state.' });
   });
 
+  app.post('/api/demo/ritual/:id/approve', async (_req, reply) => {
+    if (!demoEngine) {
+      return reply.status(404).send({ error: 'NO_ACTIVE_DEMO_RITUAL' });
+    }
+    const success = demoEngine.handleStreamerAction({ action: 'APPROVE' });
+    const snap = demoEngine.toSnapshot();
+    hub.broadcastSnapshot(DEMO_BROADCASTER_ID, snap);
+    return reply.send({ success, snapshot: snap });
+  });
+
+  app.post('/api/demo/ritual/:id/override', async (req, reply) => {
+    if (!demoEngine) {
+      return reply.status(404).send({ error: 'NO_ACTIVE_DEMO_RITUAL' });
+    }
+    const rawBody = req.body && typeof req.body === 'object' ? (req.body as Record<string, unknown>) : {};
+    const parseAction = StreamerActionSchema.safeParse({ action: 'OVERRIDE', ...rawBody });
+    if (!parseAction.success || !parseAction.data.overrideChoice) {
+      return reply.status(400).send({ error: 'INVALID_OVERRIDE_CHOICE' });
+    }
+    const success = demoEngine.handleStreamerAction(parseAction.data);
+    const snap = demoEngine.toSnapshot();
+    hub.broadcastSnapshot(DEMO_BROADCASTER_ID, snap);
+    return reply.send({ success, snapshot: snap });
+  });
+
+  app.post('/api/demo/ritual/:id/skip', async (_req, reply) => {
+    if (!demoEngine) {
+      return reply.status(404).send({ error: 'NO_ACTIVE_DEMO_RITUAL' });
+    }
+    const success = demoEngine.handleStreamerAction({ action: 'SKIP' });
+    const snap = demoEngine.toSnapshot();
+    hub.broadcastSnapshot(DEMO_BROADCASTER_ID, snap);
+    return reply.send({ success, snapshot: snap });
+  });
+
+  app.post('/api/demo/ritual/clear', async (_req, reply) => {
+    demoAdapter.stop();
+    if (demoEngine) {
+      demoEngine.handleStreamerAction({ action: 'CLEAR' });
+      const snap = demoEngine.toSnapshot();
+      demoEngine = null;
+      hub.broadcastSnapshot(DEMO_BROADCASTER_ID, snap);
+      return reply.send({ success: true, snapshot: snap });
+    }
+    return reply.send({ success: true, message: 'Already idle' });
+  });
+
   // 8. Delete Local Data (Protected)
   app.post('/api/data/delete-local', async (req, reply) => {
-    await requireBroadcasterAuth(req, reply, { allowDemoSimulation: true });
-    if (reply.sent) return;
+    const session = await requireBroadcasterAuth(req, reply);
+    if (!session) return;
 
     db.deleteLocalData();
     activeEngine = null;
+    demoEngine = null;
     pendingRaid = null;
     return reply.send({ success: true, message: 'Local data and history purged successfully.' });
   });
@@ -587,6 +705,14 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
 
       activeTwitchToken = tokenData.accessToken;
       activeBroadcasterId = userProfile.id;
+
+      // Encrypt and persist tokens with AES-256-GCM authenticated encryption at rest
+      tokenManager.saveTokens(
+        userProfile.id,
+        tokenData.accessToken,
+        tokenData.refreshToken,
+        tokenData.expiresAt
+      );
 
       // Ensure broadcaster config exists for user
       const existing = db.getConfig(userProfile.id);
@@ -627,14 +753,50 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
   });
 
   app.post('/api/auth/disconnect', async (req, reply) => {
-    await requireBroadcasterAuth(req, reply, { allowDemoSimulation: true });
-    if (reply.sent) return;
+    const session = await requireBroadcasterAuth(req, reply);
+    if (!session) return;
+
+    // Securely revoke Twitch token and clear stored encrypted credentials
+    await tokenManager.revokeAndClear(session.broadcasterId, oauth);
 
     activeTwitchToken = null;
     activeBroadcasterId = null;
     eventSub.clearBroadcasterCredentials();
     return reply.send({ success: true, message: 'Twitch connection disconnected.' });
   });
+
+  // Dev login endpoint for automated testing in non-production environments
+  if (config.NODE_ENV !== 'production') {
+    app.post('/api/auth/dev-login', async (req, reply) => {
+      const body = (req.body as { broadcasterId?: string; login?: string; displayName?: string } | undefined) || {};
+      const broadcasterId = body.broadcasterId || '123456789';
+      const login = body.login || 'robocrafter';
+      const displayName = body.displayName || 'RoboCrafterLive';
+
+      // Ensure broadcaster config exists
+      const existing = db.getConfig(broadcasterId);
+      if (!existing) {
+        db.saveConfig({
+          ...CHAMPIONSHIP_CONFIG,
+          broadcasterId,
+          displayName,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
+      const { sessionToken } = sessionManager.createSession(broadcasterId, login, displayName);
+
+      reply.setCookie('raidrelay_session', sessionToken, {
+        path: '/',
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: false,
+        maxAge: 7 * 24 * 3600,
+      });
+
+      return reply.send({ success: true, message: 'Dev session created', broadcasterId, login, displayName });
+    });
+  }
 
   // Serve Built Web SPA Frontend if present
   const webDistDir = path.resolve(__dirname, '../../web/dist');
@@ -660,7 +822,10 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<{
     app,
     db,
     hub,
+    tokenManager,
     engine: () => activeEngine,
+    demoEngine: () => demoEngine,
+    getDemoChannelKey: () => DEMO_CHANNEL_KEY,
     startSimulatedRaid: startSimulatedRaidFn,
   };
 }

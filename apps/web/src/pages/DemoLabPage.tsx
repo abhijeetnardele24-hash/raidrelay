@@ -1,6 +1,15 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { fetchCurrentRitual, runDemo, resetDemo, approveRitual, overrideRitual, skipRitual, clearRitual } from '../api/client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  fetchDemoRitual,
+  fetchDemoCapability,
+  runDemo,
+  resetDemo,
+  approveDemoRitual,
+  overrideDemoRitual,
+  skipDemoRitual,
+  clearDemoRitual,
+} from '../api/client';
 import { SAMPLE_CHAT_VOTES } from '@raidrelay/fixtures';
 import {
   PlayCircle,
@@ -12,21 +21,52 @@ import {
 } from 'lucide-react';
 
 export const DemoLabPage: React.FC = () => {
+  const { data: capData } = useQuery({
+    queryKey: ['demo-capability'],
+    queryFn: fetchDemoCapability,
+  });
+
+  const demoChannelKey = capData?.channelKey || '';
+
   const { data: ritualData } = useQuery({
-    queryKey: ['current-ritual'],
-    queryFn: fetchCurrentRitual,
+    queryKey: ['demo-ritual'],
+    queryFn: fetchDemoRitual,
     refetchInterval: 300,
   });
 
   const ritual = ritualData?.ritual;
   const isRitualActive = ritualData?.active && ritual && ritual.state !== 'IDLE';
 
-  const handleStartSim = (multiplier: number) => {
-    runDemo(multiplier);
+  const queryClient = useQueryClient();
+
+  const handleStartSim = async (multiplier: number) => {
+    await runDemo(multiplier);
+    queryClient.invalidateQueries({ queryKey: ['demo-ritual'] });
   };
 
-  const handleReset = () => {
-    resetDemo();
+  const handleReset = async () => {
+    await resetDemo();
+    queryClient.invalidateQueries({ queryKey: ['demo-ritual'] });
+  };
+
+  const handleApprove = async (id: string) => {
+    await approveDemoRitual(id);
+    queryClient.invalidateQueries({ queryKey: ['demo-ritual'] });
+  };
+
+  const handleOverride = async (id: string, choice: 'A' | 'B') => {
+    await overrideDemoRitual(id, choice);
+    queryClient.invalidateQueries({ queryKey: ['demo-ritual'] });
+  };
+
+  const handleSkip = async (id: string) => {
+    await skipDemoRitual(id);
+    queryClient.invalidateQueries({ queryKey: ['demo-ritual'] });
+  };
+
+  const handleClear = async () => {
+    await clearDemoRitual();
+    queryClient.invalidateQueries({ queryKey: ['demo-ritual'] });
   };
 
   const votesA = ritual?.votesA || 0;
@@ -133,7 +173,7 @@ export const DemoLabPage: React.FC = () => {
                 <div className="space-y-2 pt-1">
                   <button
                     type="button"
-                    onClick={() => approveRitual(ritual.id)}
+                    onClick={() => handleApprove(ritual.id)}
                     disabled={ritual.state !== 'AWAITING_STREAMER'}
                     className="w-full py-2.5 rounded bg-relay-emerald hover:bg-relay-emerald/90 text-charcoal-950 font-bold text-xs transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-emerald-glow"
                   >
@@ -143,7 +183,7 @@ export const DemoLabPage: React.FC = () => {
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
-                      onClick={() => overrideRitual(ritual.id, 'A')}
+                      onClick={() => handleOverride(ritual.id, 'A')}
                       disabled={ritual.state !== 'VOTING' && ritual.state !== 'AWAITING_STREAMER'}
                       className="py-2 rounded bg-charcoal-700 hover:bg-charcoal-600 border border-charcoal-600 text-relay-amber font-semibold text-xs disabled:opacity-40"
                     >
@@ -151,7 +191,7 @@ export const DemoLabPage: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => overrideRitual(ritual.id, 'B')}
+                      onClick={() => handleOverride(ritual.id, 'B')}
                       disabled={ritual.state !== 'VOTING' && ritual.state !== 'AWAITING_STREAMER'}
                       className="py-2 rounded bg-charcoal-700 hover:bg-charcoal-600 border border-charcoal-600 text-relay-cyan font-semibold text-xs disabled:opacity-40"
                     >
@@ -162,14 +202,14 @@ export const DemoLabPage: React.FC = () => {
                   <div className="grid grid-cols-2 gap-2 pt-1">
                     <button
                       type="button"
-                      onClick={() => skipRitual(ritual.id)}
+                      onClick={() => handleSkip(ritual.id)}
                       className="py-1.5 rounded bg-charcoal-700 hover:bg-charcoal-600 text-chalk-300 text-xs"
                     >
                       Skip Ritual
                     </button>
                     <button
                       type="button"
-                      onClick={() => clearRitual()}
+                      onClick={handleClear}
                       className="py-1.5 rounded bg-relay-ruby/10 hover:bg-relay-ruby/20 border border-relay-ruby/40 text-relay-ruby text-xs font-semibold"
                     >
                       Panic Clear
@@ -225,23 +265,31 @@ export const DemoLabPage: React.FC = () => {
                 <Tv className="w-4 h-4 text-relay-emerald" />
                 <span>OBS Browser Overlay Preview (1920×1080 Aspect)</span>
               </span>
-              <a
-                href="/overlay/demo-channel-key-12345"
-                target="_blank"
-                rel="noreferrer"
-                className="text-[11px] text-relay-cyan hover:underline"
-              >
-                Open Clean Window ↗
-              </a>
+              {demoChannelKey && (
+                <a
+                  href={`/overlay/${demoChannelKey}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[11px] text-relay-cyan hover:underline"
+                >
+                  Open Clean Window ↗
+                </a>
+              )}
             </div>
 
             {/* Embedded Live Overlay Iframe */}
             <div className="w-full aspect-video bg-charcoal-950 rounded-lg border-2 border-charcoal-700 overflow-hidden relative shadow-broadcast">
-              <iframe
-                title="RaidRelay Live OBS Overlay"
-                src="/overlay/demo-channel-key-12345"
-                className="w-full h-full border-0 pointer-events-none"
-              />
+              {demoChannelKey ? (
+                <iframe
+                  title="RaidRelay Live OBS Overlay"
+                  src={`/overlay/${demoChannelKey}`}
+                  className="w-full h-full border-0 pointer-events-none"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-chalk-400 text-xs">
+                  Loading overlay capability...
+                </div>
+              )}
             </div>
 
             <div className="p-3 rounded bg-charcoal-900 border border-charcoal-700 text-[11px] text-chalk-400 space-y-1">

@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import path from 'node:path';
+import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
@@ -55,6 +56,24 @@ if (isProduction) {
   }
 }
 
+let resolvedCodexSessionId = process.env.CODEX_SESSION_ID;
+if (!resolvedCodexSessionId) {
+  try {
+    const evidencePath = path.resolve(__dirname, '../../../docs/evidence-index.json');
+    if (fs.existsSync(evidencePath)) {
+      const evidence = JSON.parse(fs.readFileSync(evidencePath, 'utf8'));
+      if (evidence.codexSessionId) {
+        resolvedCodexSessionId = evidence.codexSessionId;
+      }
+    }
+  } catch {
+    // fallback
+  }
+}
+if (!resolvedCodexSessionId) {
+  resolvedCodexSessionId = '93a16a2b-a2a0-461f-851b-7a1e342fe97f';
+}
+
 export const config: ServerConfig = {
   PORT: parseInt(process.env.PORT || '4000', 10),
   HOST: process.env.HOST || '127.0.0.1',
@@ -72,5 +91,5 @@ export const config: ServerConfig = {
   TWITCH_REDIRECT_URI: process.env.TWITCH_REDIRECT_URI || 'http://localhost:4000/auth/twitch/callback',
   TWITCH_BOT_USER_ID: process.env.TWITCH_BOT_USER_ID || '',
   TWITCH_EVENTSUB_WS_URL: process.env.TWITCH_EVENTSUB_WS_URL || 'wss://eventsub.wss.twitch.tv/ws',
-  CODEX_SESSION_ID: process.env.CODEX_SESSION_ID || '93a16a2b-a2a0-461f-851b-7a1e342fe97f',
+  CODEX_SESSION_ID: resolvedCodexSessionId,
 };

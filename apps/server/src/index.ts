@@ -7,7 +7,6 @@ async function main() {
   try {
     await app.listen({ port: config.PORT, host: config.HOST });
     console.info(`[RaidRelay] Server running at http://${config.HOST}:${config.PORT}`);
-    console.info(`[RaidRelay] OBS Overlay available at http://${config.HOST}:${config.PORT}/overlay/demo-channel-key-12345`);
     console.info(`[RaidRelay] Broadcaster Console available at http://${config.HOST}:${config.PORT}/console`);
     console.info(`[RaidRelay] Demo Lab available at http://${config.HOST}:${config.PORT}/lab`);
   } catch (err) {

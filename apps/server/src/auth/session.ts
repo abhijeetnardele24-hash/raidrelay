@@ -124,21 +124,12 @@ export function validateCsrf(req: FastifyRequest): boolean {
 
 export async function requireBroadcasterAuth(
   req: FastifyRequest,
-  reply: FastifyReply,
-  options: { allowDemoSimulation?: boolean } = {}
+  reply: FastifyReply
 ): Promise<BroadcasterSession | null> {
-  // CSRF validation
+  // CSRF validation on state-changing methods
   if (!validateCsrf(req)) {
     reply.status(403).send({ error: 'CSRF_REJECTED', message: 'State-changing request origin is not trusted.' });
     return null;
-  }
-
-  // Check demo simulation bypass if allowed for judge Demo Lab
-  if (options.allowDemoSimulation) {
-    const isDemoHeader = req.headers['x-raidrelay-demo-mode'] === 'true';
-    if (isDemoHeader) {
-      return null; // Allowed through in demo mode
-    }
   }
 
   const session = getSessionFromRequest(req);

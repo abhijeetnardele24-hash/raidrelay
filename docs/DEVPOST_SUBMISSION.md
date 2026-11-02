@@ -16,7 +16,7 @@ What happens next is almost universally painful:
 - Loud alert sirens blare over the stream audio.
 - The streamer is forced to pause their flow and awkwardly ask: *"Uh, welcome raiders! Who was that? What was your community doing? What should we do now?"*
 - Incoming viewers—who don't yet know the channel's inside jokes, current objective, or rules—feel alienated.
-- Within 90 seconds, **between 40% and 70% of raiding viewers drop off**.
+- Within 90 seconds, **streamers routinely observe a steep drop-off** as incoming viewers land in an ongoing stream without immediate context.
 
 A raid should be the most exciting moment in streaming: two distinct internet communities colliding in real time. We asked ourselves: **What if the first 90 seconds after a Twitch raid were intentionally designed as a collaborative, participatory ritual?**
 
@@ -41,7 +41,7 @@ RaidRelay is built as a high-performance TypeScript monorepo with verified verti
 - **Server-Authoritative State Engine (`@raidrelay/domain`):** Deterministic finite state machine managing phase durations, monotonic sequence numbers, tie-breaking, and tamper-evident HMAC participation receipt generation.
 - **Backend Service (`apps/server`):** Built with Fastify, native WebSockets, and WebAssembly SQLite (`sql.js`) for disk persistence. Incorporates an **EventGuard** security perimeter that deduplicates Twitch EventSub messages and enforces a 10-minute freshness window.
 - **Broadcast Overlay & Control Console (`apps/web`):** React 18 and Tailwind CSS application rendering a transparent 1920×1080 OBS browser source, a Broadcaster Console workspace, and an interactive **Demo Lab for Judges**.
-- **Automated Verification Pipeline:** 35 Vitest unit/integration tests, 8 Playwright browser journeys across desktop and mobile viewports, Axe Core WCAG 2.1 AA scans with 0 violations, and automated secret and truthfulness linters.
+- **Automated Verification Pipeline:** 50 Vitest unit/integration tests, 8 Playwright browser journeys across desktop and mobile viewports, Axe Core scans with 0 violations in tested states, and automated secret and truthfulness linters.
 
 ---
 
@@ -63,13 +63,13 @@ Codex was critical across every engineering milestone:
 1. **Architecting State Invariants:** Codex designed the deterministic `RaidRitualEngine`, ensuring illegal state transitions are rejected and vote tallies remain synchronized across multiple client viewports.
 2. **Solving the Node 24 Windows C++ Native Conflict:** When Node 24 on Windows broke `better-sqlite3` native compilation, Codex diagnosed the V8 13.x compiler error and migrated the database layer to WebAssembly SQLite (`sql.js`), achieving zero-dependency stability.
 3. **Eliminating Race Conditions & Collisions:** Codex diagnosed a system environment variable collision where a global PostgreSQL `DATABASE_URL` conflicted with local SQLite storage, implementing explicit path validation.
-4. **Ensuring 100% WCAG 2.1 AA Compliance:** Codex ran automated Axe Core accessibility scans, identified missing ARIA labels and keyboard scroll access in Demo Lab controls, and resolved all violations down to 0 errors.
+4. **Ensuring Zero Axe Violations in Tested States:** Codex ran automated Axe Core accessibility scans, identified missing ARIA labels and keyboard scroll access in Demo Lab controls, and resolved all violations down to 0 errors.
 
 ---
 
 ## Challenges We Overcame
 
-- **Hate-Raid & Spam Resistance:** Rendering arbitrary viewer chat on a live broadcast overlay invites hate-raid attacks and slur injection. We designed a strict **Zero Arbitrary Chat Injection** architecture: only binary commands (`!relay A` / `!relay B`) are counted into numeric tallies, and streamers have a single-click **Panic Clear** that blanks the screen in under 50ms.
+- **Hate-Raid & Spam Resistance:** Rendering arbitrary viewer chat on a live broadcast overlay invites hate-raid attacks and slur injection. We designed a strict **Zero Arbitrary Chat Injection** architecture: only binary commands (`!relay A` / `!relay B`) are counted into numeric tallies, and streamers have a single-click **Panic Clear** that immediately halts the in-memory state machine (mean 0.2 µs / p99 1.4 µs) and blanks the screen in under 50ms over local networks.
 - **Voter Privacy vs. Vote Integrity:** Preventing duplicate votes without storing viewer Twitch IDs was solved using HMAC-SHA256 salted hashing with ephemeral in-memory sets that expire automatically after the ritual.
 - **Broadcast Reliability:** Overlay browser sources can reload at any moment. By maintaining server-authoritative state with sequence numbers, any newly connected or refreshed OBS source immediately receives the active ritual snapshot without desynchronization.
 
@@ -77,9 +77,9 @@ Codex was critical across every engineering milestone:
 
 ## Accomplishments We're Proud Of
 
-- **43/43 Automated Verification Suite:** 100% passing Vitest (35 unit/integration), Playwright (8 E2E journeys across Desktop & Mobile), Axe Core (0 WCAG violations), secret scanner, and claims linter runs on every build.
-- **Zero Axe Accessibility Violations:** Full keyboard navigability, high-contrast broadcast typography, and responsive layouts across desktop (1440px) and mobile (390px).
-- **Sub-50ms Streamer Flight Controls:** Real-time streamer approval, override, and emergency clear functionality over WebSockets.
+- **58/58 Automated Verification Suite:** 100% passing Vitest (50 unit/integration), Playwright (8 E2E journeys across Desktop & Mobile), Axe Core (0 violations in tested states), secret scanner, and claims linter runs on every build.
+- **Zero Axe Violations in Tested States:** Full keyboard navigability, high-contrast broadcast typography, and responsive layouts across desktop (1440px) and mobile (390px).
+- **Sub-50ms Streamer Flight Controls:** Real-time streamer approval, override, and emergency clear functionality over WebSockets backed by sub-microsecond in-memory state transitions.
 - **Deterministic Judge Tour:** The interactive Demo Lab allows anyone to experience the full 90-second ritual in real time or fast-forwarded at 10x speed with truthful provenance labeling.
 
 ---

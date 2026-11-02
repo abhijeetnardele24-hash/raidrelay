@@ -10,7 +10,9 @@ const FORBIDDEN_CLAIMS = [
   /completely\s+unhackable/i,
   /zero\s+vulnerabilities/i,
   /guaranteed\s+conversion/i,
-  /all\s+31\s+tests/i, // Stale count! Now 35 unit/integration + 8 e2e = 43 tests
+  /all\s+31\s+tests/i,
+  /all\s+43\s+tests/i,
+  /40%?\s*(to|-)\s*70%/i, // Forbidden uncited drop-off claim
 ];
 
 const SCAN_EXTENSIONS = ['.md', '.ts', '.tsx', '.html', '.json'];

@@ -131,6 +131,23 @@ export class TwitchOAuthService {
     }
   }
 
+  public async revokeToken(token: string): Promise<boolean> {
+    try {
+      const params = new URLSearchParams({
+        client_id: this.clientId,
+        token,
+      });
+      const res = await request('https://id.twitch.tv/oauth2/revoke', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
+      });
+      return res.statusCode === 200;
+    } catch {
+      return false;
+    }
+  }
+
   public async fetchUserProfile(accessToken: string): Promise<TwitchProfile> {
     const res = await request('https://api.twitch.tv/helix/users', {
       method: 'GET',

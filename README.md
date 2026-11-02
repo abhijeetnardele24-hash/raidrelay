@@ -2,8 +2,8 @@
 
 > **"The first 90 seconds after a Twitch raid, designed."**
 
-[![Build & Verify](https://img.shields.io/badge/Verification-Passing%20(43%2F43)-emerald)](https://github.com/abhijeetnardele24-hash/raidrelay)
-[![WCAG 2.1 AA](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA%20Compliant-blue)](https://www.w3.org/WAI/standards-guidelines/wcag/)
+[![Build & Verify](https://img.shields.io/badge/Verification-Passing%20(58%2F58)-emerald)](https://github.com/abhijeetnardele24-hash/raidrelay)
+[![Accessibility](https://img.shields.io/badge/Accessibility-0%20Axe%20Violations%20(Tested%20States)-blue)](https://www.w3.org/WAI/standards-guidelines/wcag/)
 [![Twitch EventSub](https://img.shields.io/badge/Twitch-EventSub%20WebSocket%20v1-purple)](https://dev.twitch.tv/docs/eventsub/)
 [![Codex Session](https://img.shields.io/badge/OpenAI%20Codex-Session%20Verified-blueviolet)](https://github.com/abhijeetnardele24-hash/raidrelay)
 
@@ -13,7 +13,7 @@
 
 > **A raid is not an alert; it is a community handoff. RaidRelay makes that handoff understandable, participatory, and safe in 90 seconds.**
 
-When a Twitch raid hits today, incoming viewers are greeted by loud sirens, confusing inside jokes, and an awkward streamer fumbling to explain what channel they just landed on. Within 90 seconds, **40% to 70% of raiding viewers leave**.
+When a Twitch raid hits today, incoming viewers are greeted by loud sirens, confusing inside jokes, and an awkward streamer fumbling to explain what channel they just landed on. Within 90 seconds, streamers routinely observe incoming viewers drop off before discovering what the stream is about.
 
 **RaidRelay solves this.** It transforms a sudden alert into a synchronized 5-phase community handoff ritual:
 1. **Landing (4s):** Both streamers' profile avatars and community colors collide on screen with an honorable welcome.
@@ -53,10 +53,10 @@ Judges can evaluate RaidRelay end-to-end in 60 seconds without needing a live Tw
 
 RaidRelay separates public Twitch ingestion, server-authoritative state logic, and broadcast rendering into four verified vertical layers:
 
-- **Twitch Integration Layer:** Fastify backend listening to official Twitch EventSub WebSockets (`channel.raid`, `channel.chat.message`) with automatic keepalive watchdog, session welcome handling, and token encryption.
+- **Twitch Integration Layer:** Fastify backend listening to official Twitch EventSub WebSockets (`channel.raid`, `channel.chat.message`) with automatic keepalive watchdog, session welcome handling, and AES-256-GCM token encryption at rest.
 - **EventGuard Security Perimeter:** Zod schema validation, message ID deduplication with TTL, and timestamp freshness rejection (>10 minutes rejected).
 - **RaidRitualEngine Domain:** A deterministic finite state machine with strict timing invariants, HMAC voter hashing (`1-person = 1-vote`), and cryptographic participation receipt signing.
-- **Client Presentation:** Vite + React 18 SPA featuring an ultra-low latency WebSocket stream, Broadcaster Console, WCAG 2.1 AA accessible Judge Demo Lab, and transparent 1920×1080 OBS Browser Overlay.
+- **Client Presentation:** Vite + React 18 SPA featuring an ultra-low latency WebSocket stream, Broadcaster Console, Demo Lab (0 Axe accessibility violations in tested states), and transparent 1920×1080 OBS Browser Overlay.
 
 ---
 
@@ -82,16 +82,17 @@ Split-screen evaluation environment featuring streamer controls, simulated chat 
 
 ## Verified Test & Evidence Scorecard
 
-All 43 tests (35 unit/integration, 8 Playwright E2E) and verification gates pass with zero warnings:
+All 58 tests (50 unit/integration, 8 Playwright E2E) and verification gates pass with zero warnings:
 
 | Test Suite | Framework | Status | Evidence Count |
 | :--- | :--- | :--- | :--- |
 | **Domain State Machine & Invariants** | Vitest | PASS | 14/14 tests (transitions, ties, clear, HMAC, timeouts) |
-| **Twitch EventSub Lifecycle & Gateway** | Vitest | PASS | 6/6 tests (connection ladder, reconnect, frame parse) |
-| **Server API & EventGuard** | Vitest | PASS | 15/15 tests (auth, CSRF, origin check, deduplication, freshness) |
+| **Twitch EventSub Lifecycle & Connection Ladder** | Vitest | PASS | 11/11 tests (connection ladder, reconnect, frame parse, supersession) |
+| **Token Encryption & Lifecycle** | Vitest | PASS | 7/7 tests (AES-256-GCM authenticated encryption, tampering, refresh) |
+| **Server API, CSRF & Channel Isolation** | Vitest | PASS | 18/18 tests (auth, CSRF, origin check, channel isolation, demo namespace) |
 | **End-to-End User Journeys** | Playwright | PASS | 8/8 journeys (Desktop Chrome & 390px Mobile Viewport) |
-| **Accessibility Audit** | Axe Core | PASS | **0 violations** (WCAG 2.1 AA compliance) |
-| **Panic Clear Latency Benchmark** | Benchmark | PASS | **0.2 µs mean / 1.4 µs p99** (1,000 iterations) |
+| **Accessibility Audit** | Axe Core | PASS | **0 violations in tested states** |
+| **Panic Clear Latency Benchmark** | Benchmark | PASS | **0.2 µs mean / 1.4 µs p99 in-memory state transition** (1,000 iterations) |
 | **Repository Secret Audit** | Custom Scanner | PASS | **0 exposed secrets** or private tokens |
 | **Truthfulness & Claims Verification**| Custom Scanner | PASS | **0 ungrounded / hyperbolic claims** |
 | **TypeScript Strict Compilation** | `tsc --build` | PASS | **0 type errors** across 5 workspaces |
@@ -103,12 +104,12 @@ All 43 tests (35 unit/integration, 8 Playwright E2E) and verification gates pass
 
 RaidRelay adheres strictly to current Twitch API and EventSub specifications:
 
-- **OAuth 2.0 Authorization Code Flow:** PKCE-supported CSRF state cookie verification storing tokens securely server-side.
+- **OAuth 2.0 Authorization Code Flow:** PKCE-supported CSRF state cookie verification with tokens encrypted at rest via AES-256-GCM.
 - **EventSub WebSocket (`wss://eventsub.wss.twitch.tv/ws`):**
   - Listens for `session_welcome` and extracts `session_id`.
   - Dynamically registers subscriptions for `channel.raid` (v1) and `channel.chat.message` (v1).
   - Handles `session_keepalive` watchdog timeouts (reconnects within 3s).
-  - Gracefully responds to `session_reconnect` without dropping ritual state.
+  - Gracefully responds to `session_reconnect` without duplicate subscriptions.
 - **Command Whitelist:** Only strict `!relay A` and `!relay B` messages are parsed. All free-form chat, HTML injection, and formatting codes are completely stripped.
 - **Outgoing Chat Isolation:** Outgoing bot announcements (Helix Send Chat Message) run inside an isolated error boundary; API rate limits or network hiccups cannot interrupt the OBS overlay.
 
@@ -138,7 +139,7 @@ RaidRelay adheres strictly to current Twitch API and EventSub specifications:
 
 - **HMAC Voter Privacy:** Twitch User IDs are salted with a server-side HMAC salt (`HMAC_VOTER_SALT`) before memory storage. Raw user IDs are never stored in the database or exposed in WebSocket frames.
 - **Zero Raw Chat Injection:** No arbitrary viewer chat text is rendered on the broadcast screen. Only structured choice counts (`A` vs `B`) and sanitized broadcaster configuration strings appear on the overlay.
-- **Streamer Panic Button:** The broadcaster console provides an instant single-click **Panic Clear** that immediately halts the state machine, clears voter sets, and blanks the OBS overlay in under 50ms.
+- **Streamer Panic Button:** The broadcaster console provides an instant single-click **Panic Clear** that immediately halts the in-memory state machine (mean 0.2 µs / p99 1.4 µs) and blanks the OBS overlay in under 50ms over local networks.
 - **Tamper-Evident Receipts:** Every completed ritual produces an HMAC-SHA256 signed digital receipt certifying vote counts and winning choice.
 
 ---
