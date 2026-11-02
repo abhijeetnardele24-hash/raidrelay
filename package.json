@@ -23,6 +23,7 @@
     "@axe-core/playwright": "^4.10.1",
     "@playwright/test": "^1.49.1",
     "@types/node": "^22.10.5",
+    "@types/ws": "^8.5.14",
     "@typescript-eslint/eslint-plugin": "^8.19.1",
     "@typescript-eslint/parser": "^8.19.1",
     "eslint": "^9.18.0",
@@ -31,6 +32,7 @@
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
     "vite": "^6.0.7",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "ws": "^8.18.0"
   }
 }

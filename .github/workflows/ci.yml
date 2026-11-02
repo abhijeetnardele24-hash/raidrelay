@@ -15,8 +15,8 @@ jobs:
       PORT: 4000
       HOST: 127.0.0.1
       APP_BASE_URL: http://localhost:4000
-      SESSION_SECRET: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-      HMAC_VOTER_SALT: fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210
+      SESSION_SECRET: ci-test-session-secret-at-least-32-chars-long-0123
+      HMAC_VOTER_SALT: ci-test-voter-salt-at-least-32-chars-long-0123
       CODEX_SESSION_ID: 93a16a2b-a2a0-461f-851b-7a1e342fe97f
 
     steps:
