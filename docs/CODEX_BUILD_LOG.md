@@ -16,7 +16,7 @@ Codex was utilized not merely as an autocomplete engine, but as an autonomous pr
 2. Building an authenticated Fastify backend with official Twitch EventSub WebSocket and Helix API integrations.
 3. Architecting an OBS-ready broadcast overlay and Broadcaster Console styled with broadcast-grade Tailwind design tokens.
 4. Diagnosing runtime failures, environment collisions, native C++ build conflicts, and accessibility violations down to root cause.
-5. Establishing a 31-test automated verification gate with zero regressions.
+5. Establishing a 43-test automated verification gate (35 Vitest + 8 Playwright E2E) with zero regressions.
 
 ---
 
@@ -67,9 +67,10 @@ Codex was utilized not merely as an autocomplete engine, but as an autonomous pr
 Every automated gate passed with exit code 0:
 - **Linting:** `eslint . --max-warnings 0` (0 errors, 0 warnings)
 - **TypeScript:** `tsc --build` (0 errors across 5 monorepo packages)
-- **Unit & Integration:** `vitest run` (23/23 tests passing in 1.20s)
-- **E2E Journeys & Accessibility:** `playwright test` (8/8 tests passing, 0 Axe violations)
-- **Secret Scan:** `tsx scripts/security-scan.ts` (0 exposed tokens, .env ignored)
-- **Claims Audit:** `tsx scripts/check-claims.ts` (0 ungrounded claims)
+- **Unit & Integration:** `vitest run` (35/35 tests passing in 1.41s across domain, eventsub, and server)
+- **E2E Journeys & Accessibility:** `playwright test` (8/8 tests passing, 0 Axe WCAG 2.1 AA violations)
+- **Panic Clear Latency Benchmark:** `tsx scripts/benchmark-panic-clear.ts` (0.2 µs mean / 1.4 µs p99 across 1,000 iterations)
+- **Secret Scan:** `tsx scripts/security-scan.ts` (0 exposed tokens, 0 unignored .env files across tree & Git history)
+- **Claims Audit:** `tsx scripts/check-claims.ts` (0 ungrounded or hyperbolic claims)
 - **Production Build:** `pnpm build` (clean production artifacts for all packages)
 

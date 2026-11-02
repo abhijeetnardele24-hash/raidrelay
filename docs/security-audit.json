@@ -1,10 +1,7 @@
 {
-  "timestamp": "2026-11-02T13:41:42.388Z",
+  "timestamp": "2026-11-02T13:46:35.276Z",
   "scanner": "RaidRelay Security Scanner v2.0",
-  "passed": false,
-  "issuesCount": 2,
-  "issues": [
-    "CRITICAL: Secret pattern matching /SESSION_SECRET\\s*=\\s*['\"]?0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef['\"]?/ detected in recent git commits",
-    "CRITICAL: Secret pattern matching /HMAC_VOTER_SALT\\s*=\\s*['\"]?fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210['\"]?/ detected in recent git commits"
-  ]
+  "passed": true,
+  "issuesCount": 0,
+  "issues": []
 }
